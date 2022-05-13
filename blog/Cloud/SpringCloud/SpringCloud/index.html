@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>SpringCloud介绍 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="SpringCloud介绍">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="基础知识介绍：单体架构系统：单体架构就是所有功能，都放在一个应用里。 好处：便于开发，测试，部署也很方便，直接打成一个 jar 或者 war, 就什么都好了。 弊端：要体现在高访问，高并发的上限是固定的。 比如一个单体架构，能够承受 1000次访问&#x2F;秒。 但是访问量达到 2000次&#x2F;秒的时候，就会非常卡顿，严重影响业务，并且仅仅依靠单体架构本身，很难突破这个瓶颈了。 集群和分布">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringCloud介绍">
+<meta property="og:url" content="http://example.com/blog/Cloud/SpringCloud/SpringCloud/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="基础知识介绍：单体架构系统：单体架构就是所有功能，都放在一个应用里。 好处：便于开发，测试，部署也很方便，直接打成一个 jar 或者 war, 就什么都好了。 弊端：要体现在高访问，高并发的上限是固定的。 比如一个单体架构，能够承受 1000次访问&#x2F;秒。 但是访问量达到 2000次&#x2F;秒的时候，就会非常卡顿，严重影响业务，并且仅仅依靠单体架构本身，很难突破这个瓶颈了。 集群和分布">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/%E5%8D%95%E4%BD%93%E7%BB%93%E6%9E%84.png">
+<meta property="og:image" content="http://example.com/assets/png/%E9%9B%86%E7%BE%A4.png">
+<meta property="og:image" content="http://example.com/assets/png/%E5%88%86%E5%B8%83%E5%BC%8F.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud.png">
+<meta property="article:published_time" content="2022-05-12T10:23:36.531Z">
+<meta property="article:modified_time" content="2022-05-13T06:28:30.419Z">
+<meta property="article:author" content="Tao Liu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/%E5%8D%95%E4%BD%93%E7%BB%93%E6%9E%84.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file active"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/cloud%E5%8E%9F%E7%90%86/">cloud原理</a></li>  <li class="file"><a href="/blog/Cloud/Cloud%E5%9F%BA%E7%A1%80/">cloud基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            DB
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            mysql
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/mysql/mysql/">mysql1</a></li>  <li class="file"><a href="/blog/DB/mysql/test/">test</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            oracle
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/oracle/db2/">DB</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/"></a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="page-Cloud/SpringCloud/SpringCloud" class="article article-type-page" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            SpringCloud介绍
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <h1 id="基础知识介绍："><a href="#基础知识介绍：" class="headerlink" title="基础知识介绍："></a>基础知识介绍：</h1><h2 id="单体架构系统："><a href="#单体架构系统：" class="headerlink" title="单体架构系统："></a>单体架构系统：</h2><p>单体架构就是所有功能，都放在一个应用里。</p>
+<h3 id="好处："><a href="#好处：" class="headerlink" title="好处："></a>好处：</h3><p>便于开发，测试，部署也很方便，直接打成一个 jar 或者 war, 就什么都好了。</p>
+<h3 id="弊端："><a href="#弊端：" class="headerlink" title="弊端："></a>弊端：</h3><p>要体现在高访问，高并发的上限是固定的。 比如一个单体架构，能够承受 1000次访问&#x2F;秒。 但是访问量达到 2000次&#x2F;秒的时候，就会非常卡顿，严重影响业务，并且仅仅依靠单体架构本身，很难突破这个瓶颈了。<br><img src="/../../../assets/png/%E5%8D%95%E4%BD%93%E7%BB%93%E6%9E%84.png" alt="单体结构.png" title="单体结构"></p>
+<h2 id="集群和分布式："><a href="#集群和分布式：" class="headerlink" title="集群和分布式："></a>集群和分布式：</h2><p>既然单体架构会有性能上的瓶颈，那么总要解决呀。 解决办法通常就是采用集群和分布式来做。</p>
+<h3 id="集群："><a href="#集群：" class="headerlink" title="集群："></a>集群：</h3><p>指一组相互独立的计算机，通过高速的网络组成一个计算机系统。服务器集群就是指将很多服务器集中起来一起进行同一种服务，在客户端看来就像是只有一个服务器。</p>
+<h4 id="集群的特点和优势"><a href="#集群的特点和优势" class="headerlink" title="集群的特点和优势:"></a>集群的特点和优势:</h4><ul>
+<li>高性能  </li>
+<li>性价比   </li>
+<li>可伸缩性<h4 id="集群的分类"><a href="#集群的分类" class="headerlink" title="集群的分类"></a>集群的分类</h4></li>
+<li>负载均衡集群（Load balancing clusters）简称LBC</li>
+<li>高可用性集群（High-availability clusters）简称HAC</li>
+<li>高性能计算集群（High-perfomance clusters）简称HPC</li>
+</ul>
+<p><img src="/../../../assets/png/%E9%9B%86%E7%BE%A4.png" alt="集群.png" title="集群"></p>
+<h3 id="分布式："><a href="#分布式：" class="headerlink" title="分布式："></a>分布式：</h3><p>指将不同的业务分布在不同的地方，而集群指的是将几台服务器集中在一起，实现同一业务。分布式中的每一个节点，都可以做集群，而集群并不一定就是分布式的。</p>
+<h4 id="分布式一致性："><a href="#分布式一致性：" class="headerlink" title="分布式一致性："></a>分布式一致性：</h4><p>分布式系统中，一个问题是负载均衡，另外一个问题就是数据的一致性。</p>
+<p>在分布式集群中，很难保障数据的一致性。在以往的单节点服务中，通常使用锁来实现，当发生并发冲突时 通过对锁的持有获得对象的操作权，从而保证数据在同一时刻只允许被一个请求操作。但是在集群中，若同样采用锁的机制，那么需要一台节点用来管理分配锁，当其他节点进行请求前，首先去获取锁从而获得执行权。但是这样会产生单节点问题，即若管理锁的节点down掉，那么整个集群将无法工作。同时，由于锁的机制会使整个集群变成串行化单节点的形式，失去了集群的意义。</p>
+<p><img src="/../../../assets/png/%E5%88%86%E5%B8%83%E5%BC%8F.png" alt="分布式.png" title="分布式"></p>
+<h3 id="分布式和集群的关系："><a href="#分布式和集群的关系：" class="headerlink" title="分布式和集群的关系："></a>分布式和集群的关系：</h3><ul>
+<li>根据分布式的介绍看出，其主要的功能是用了将我们的系统模块化，将系统进行解耦的，方便我们的维护和开发的，但是其并不能解决我们的并发问题，也无法保证我们的系统在服务器宕机后的正常运转。</li>
+<li>集群就恰好弥补了分布式的缺陷，集群就是多个服务器处理相同的业务，这在一方面可以解决或者说改善我们系统的并发问题，一方面可以解决我们服务器如果出现一定数量的宕机后，系统仍然可以正常运转。</li>
+</ul>
+<h1 id="SpringCloud介绍："><a href="#SpringCloud介绍：" class="headerlink" title="SpringCloud介绍："></a>SpringCloud介绍：</h1><p>SpringCloud 就是一套工具。</p>
+<p>Spring Cloud 并不是一个项目，而是一组项目的集合。包含了很多的子项目，每一个子项目都是一种微服务开发过程中遇到的问题的一种解决方案。它利用 Spring Boot的开发便利性巧妙地简化了分布式系统基础设施的开发，如服务发现注册、配置中心、消息总线、负载均衡、断路器、数据监控等，都可以用 Spring Boot的开发风格做到一键启动和部署。Spring Cloud并没有重复制造轮子，它只是将目前各家公司开发的比较成熟、经得起实际考验的服务框架组合起来，通过Spring Boot风格进行再封装屏蔽掉了复杂的配置和实现原理，最终给开发者留出了一套简单易懂、易部署和易维护的分布式系统开发工具包。</p>
+<h2 id="子项目介绍"><a href="#子项目介绍" class="headerlink" title="子项目介绍:"></a>子项目介绍:</h2><ul>
+<li>Spring Cloud Config：集中配置管理工具，分布式系统中统一的外部配置管理，可以支持客户端配置的刷新及加密、解密操作, 可以让你把配置放到远程服务器，目前支持本地存储、Git 以及 Subversion。</li>
+<li>Spring Cloud Netflix：针对多种 Netflix 组件提供的开发工具包，其中包括 Eureka、Hystrix、Ribbon、Feign、Zuul、Archaius 等组件, 如下:</li>
+<li><ul>
+<li>Eureka：服务治理组件，包括服务端的注册中心和客户端的服务发现机制；</li>
+</ul>
+</li>
+<li><ul>
+<li>Hystrix：服务容错组件，实现了断路器模式，为依赖服务的出错和延迟提供了容错能力；</li>
+</ul>
+</li>
+<li><ul>
+<li>Ribbon：负载均衡的服务调用组件，具有多种负载均衡调用策略；</li>
+</ul>
+</li>
+<li><ul>
+<li>Feign：基于Ribbon和Hystrix的声明式服务调用组件；</li>
+</ul>
+</li>
+<li><ul>
+<li>Zuul：API网关组件，对请求提供路由及过滤功能；</li>
+</ul>
+</li>
+<li><ul>
+<li>Archaius：基于java的配置管理类库，主要用于多配置存储的动态获取。</li>
+</ul>
+</li>
+<li>Spring Cloud Bus：事件、消息总线，用于在集群（例如，配置变化事件）中传播状态变化，可与 Spring Cloud Config 联合实现热部署。</li>
+<li>Spring Cloud Consul：封装了 Consul 操作，consul 是一个服务发现与配置工具，与 Docker 容器可以无缝集成。</li>
+<li>Spring Cloud Security ：安全工具包，对Zuul代理中的负载均衡OAuth2客户端及登录认证进行支持。</li>
+<li>Spring Cloud Sleuth：日志收集工具包，封装了 Dapper，Zipkin 和 HTrace 操作. Spring Cloud 应用的分布式跟踪实现。</li>
+<li>Spring Cloud Stream：数据流操作开发包，封装了与 Redis，Rabbit、Kafka 等发送接收消息，实现的消息微服务。</li>
+<li>Spring Cloud Task：用于快速构建短暂、有限数据处理任务的微服务框架，用于向应用中添加功能性和非功能性的特性。</li>
+<li>Spring Cloud Zookeeper：基于 ZooKeeper 的服务发现与配置管理组件。</li>
+<li>Spring Cloud Gateway：API网关组件，对请求提供路由及过滤功能, Spring Cloud 网关相关的整合实现。</li>
+<li>Spring Cloud Aws：用于简化整合 Amazon Web Service 的组件。</li>
+<li>Spring Cloud Cli：基于 Spring Boot CLI，可以让你以命令行方式快速建立云组件。</li>
+<li>Spring Cloud Commons：服务发现、负载均衡、熔断机制这种模式为 Spring Cloud 客户端提供了一个通用的抽象层。</li>
+<li>Spring Cloud Contract：Spring Cloud Contract是一个总体项目，其中包含帮助用户成功实施消费者驱动合同方法的解决方案(契约测试)。</li>
+<li>Spring Cloud Cloudfoundry：通过 Oauth2 协议绑定服务到 CloudFoundry，CloudFoundry 是 VMware 推出的开源 PaaS 云平台。</li>
+<li>Spring Cloud OpenFeign：基于Ribbon和Hystrix的声明式服务调用组件，可以动态创建基于Spring MVC注解的接口实现用于服务调用，在Spring Cloud 2.0中已经取代Feign成为了一等公民。</li>
+</ul>
+<p><img src="/../../../assets/png/SpringCloud.png" alt="SpringCloud.png" title="SpringCloud"></p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    SpringCloud系列1-父子(聚合)项目
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">JAVA数据结构和算法</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
