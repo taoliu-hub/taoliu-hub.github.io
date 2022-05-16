@@ -275,14 +275,14 @@
   </url>
   
   <url>
-    <loc>http://example.com/categories/DB/mysql/</loc>
+    <loc>http://example.com/categories/DB/oracle/</loc>
     <lastmod>2022-05-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/categories/DB/oracle/</loc>
+    <loc>http://example.com/categories/DB/mysql/</loc>
     <lastmod>2022-05-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
