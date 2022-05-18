@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>Redis分布式锁实现 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="Redis">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="分布式锁的各种问题及优化并发情况下以下代码可能导致超买 12345678int stock &#x3D; Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;)); &#x2F;&#x2F; jedis.get(&quot;stock&quot;)if (stock &gt; 0) &amp;#123;    int realStock &#x3D; s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis分布式锁实现">
+<meta property="og:url" content="http://example.com/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="分布式锁的各种问题及优化并发情况下以下代码可能导致超买 12345678int stock &#x3D; Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;)); &#x2F;&#x2F; jedis.get(&quot;stock&quot;)if (stock &gt; 0) &amp;#123;    int realStock &#x3D; s">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-12-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-05-18T02:24:41.886Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file active"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">SpringCloud介绍</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/index/"></a></li>  <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Cloud/Redis/Redis分布式锁实现" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Cloud/">Cloud</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/Cloud/Redis/">Redis</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/Redis/" rel="tag">Redis</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">
+            <time datetime="2017-12-14T16:00:00.000Z" itemprop="datePublished">2017-12-15</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Redis分布式锁实现
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <h4 id="分布式锁的各种问题及优化"><a href="#分布式锁的各种问题及优化" class="headerlink" title="分布式锁的各种问题及优化"></a>分布式锁的各种问题及优化</h4><p>并发情况下以下代码可能导致超买</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int stock = Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;)); // jedis.get(&quot;stock&quot;)</span><br><span class="line">if (stock &gt; 0) &#123;</span><br><span class="line">    int realStock = stock - 1;</span><br><span class="line">    stringRedisTemplate.opsForValue().set(&quot;stock&quot;, realStock + &quot;&quot;); // jedis.set(key,value)</span><br><span class="line">    System.out.println(&quot;扣减成功，剩余库存:&quot; + realStock);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    System.out.println(&quot;扣减失败，库存不足&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>为了解决该问题可以通过redis加上分布式锁，该方式是解决了并发问题，但是引入了新的问题，若<strong>业务代码异常可能导致锁永远得不到释放</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">String lockKey = &quot;product_101&quot;;</span><br><span class="line">Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, &quot;product_id&quot;);</span><br><span class="line">if (!result) &#123;</span><br><span class="line">    return &quot;error_code&quot;;</span><br><span class="line">&#125;</span><br><span class="line">int stock = Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;));</span><br><span class="line">if (stock &gt; 0) &#123;</span><br><span class="line">    int realStock = stock - 1;</span><br><span class="line">    stringRedisTemplate.opsForValue().set(&quot;stock&quot;, realStock + &quot;&quot;);</span><br><span class="line">    System.out.println(&quot;扣减成功，剩余库存:&quot; + realStock);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    System.out.println(&quot;扣减失败，库存不足&quot;);</span><br><span class="line">&#125;</span><br><span class="line">stringRedisTemplate.delete(lockKey);</span><br></pre></td></tr></table></figure>
+
+
+<p>可以通过finally中来释放锁来解决业务代码异常的情况，但若<strong>当锁获取成功后机器宕机</strong>了，同样锁还是不能得到释放。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">String lockKey = &quot;product_101&quot;;</span><br><span class="line">try &#123;</span><br><span class="line">    Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, &quot;product_id&quot;);</span><br><span class="line">    if (!result) &#123;</span><br><span class="line">        return &quot;error_code&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    int stock = Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;));</span><br><span class="line">    if (stock &gt; 0) &#123;</span><br><span class="line">        int realStock = stock - 1;</span><br><span class="line">        stringRedisTemplate.opsForValue().set(&quot;stock&quot;, realStock + &quot;&quot;);</span><br><span class="line">        System.out.println(&quot;扣减成功，剩余库存:&quot; + realStock);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        System.out.println(&quot;扣减失败，库存不足&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    stringRedisTemplate.delete(lockKey);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以通过<strong>给锁加上一个过期时间</strong>的方式来解决获取锁成功后机器宕机，导致锁不能被释放的情况，但是这种写法还是没有完全解决，因为<strong>加锁和设置缓存时间不是原子操作</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">String lockKey = &quot;product_101&quot;;</span><br><span class="line">try &#123;</span><br><span class="line">    Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, &quot;product_id&quot;);</span><br><span class="line">    stringRedisTemplate.expire(lockKey, 10, TimeUnit.SECONDS);</span><br><span class="line">    if (!result) &#123;</span><br><span class="line">        return &quot;error_code&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    int stock = Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;));</span><br><span class="line">    if (stock &gt; 0) &#123;</span><br><span class="line">        int realStock = stock - 1;</span><br><span class="line">        stringRedisTemplate.opsForValue().set(&quot;stock&quot;, realStock + &quot;&quot;);</span><br><span class="line">        System.out.println(&quot;扣减成功，剩余库存:&quot; + realStock);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        System.out.println(&quot;扣减失败，库存不足&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    stringRedisTemplate.delete(lockKey);</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+
+<p>可通过在加锁的同时设置超时<strong>原子操作</strong>来解决该问题，但设置了超时时间若当前业务代码没有被执行完其本身没有释放锁，但由于<strong>过期锁被清理掉</strong>了，新的线程加锁进来后，<strong>之前执行业务代码的线程又去把新的线程的锁释放</strong>了，将导致锁完全失效。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">String lockKey = &quot;product_101&quot;;</span><br><span class="line">try &#123;</span><br><span class="line">    Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, &quot;product_id&quot;, 30, TimeUnit.SECONDS);</span><br><span class="line">    if (!result) &#123;</span><br><span class="line">        return &quot;error_code&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    int stock = Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;));</span><br><span class="line">    if (stock &gt; 0) &#123;</span><br><span class="line">        int realStock = stock - 1;</span><br><span class="line">        stringRedisTemplate.opsForValue().set(&quot;stock&quot;, realStock + &quot;&quot;);</span><br><span class="line">        System.out.println(&quot;扣减成功，剩余库存:&quot; + realStock);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        System.out.println(&quot;扣减失败，库存不足&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    stringRedisTemplate.delete(lockKey);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>可通过<strong>给锁设置唯一标识</strong>的方式来解决其他线程释放非自身设置的锁，所有线程只能释放本线程设置的锁。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">String lockKey = &quot;product_101&quot;;</span><br><span class="line">String clientId = UUID.randomUUID().toString();</span><br><span class="line">try &#123;</span><br><span class="line">    Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, &quot;product_id&quot;, 30, TimeUnit.SECONDS);</span><br><span class="line">    if (!result) &#123;</span><br><span class="line">        return &quot;error_code&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    int stock = Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;));</span><br><span class="line">    if (stock &gt; 0) &#123;</span><br><span class="line">        int realStock = stock - 1;</span><br><span class="line">        stringRedisTemplate.opsForValue().set(&quot;stock&quot;, realStock + &quot;&quot;);</span><br><span class="line">        System.out.println(&quot;扣减成功，剩余库存:&quot; + realStock);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        System.out.println(&quot;扣减失败，库存不足&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    if (clientId.equals(stringRedisTemplate.opsForValue().get(lockKey))) &#123;</span><br><span class="line">        stringRedisTemplate.delete(lockKey);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>虽然上面的锁已经很完善了，但还是有锁因为超时时间导致的极小概率的并发问题，该问题可以通过<strong>给锁续命</strong>即判断业务代码是否执行完成，若未完成则重置超时时间的方式来解决该问题。**<code>Redisson</code>**就是这样做的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">String lockKey = &quot;product_101&quot;;</span><br><span class="line">String clientId = UUID.randomUUID().toString();</span><br><span class="line">RLock redissonLock = redisson.getLock(lockKey);</span><br><span class="line">try &#123;</span><br><span class="line">    //加锁</span><br><span class="line">    redissonLock.lock();  //setIfAbsent(lockKey, clientId, 30, TimeUnit.SECONDS);</span><br><span class="line">    int stock = Integer.parseInt(stringRedisTemplate.opsForValue().get(&quot;stock&quot;)); // jedis.get(&quot;stock&quot;)</span><br><span class="line">    if (stock &gt; 0) &#123;</span><br><span class="line">        int realStock = stock - 1;</span><br><span class="line">        stringRedisTemplate.opsForValue().set(&quot;stock&quot;, realStock + &quot;&quot;); // jedis.set(key,value)</span><br><span class="line">        System.out.println(&quot;扣减成功，剩余库存:&quot; + realStock);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        System.out.println(&quot;扣减失败，库存不足&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    redissonLock.unlock();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+<h1 id="红锁"><a href="#红锁" class="headerlink" title="红锁"></a>红锁</h1><p>**<code>RedLock</code>**是一种利用多Master对共享资源做互斥访问，基于N个完全独立的Redis节点，运行Redlock算法通过在客户端依次执行下面的步骤来完成获取锁的操作：</p>
+<ul>
+<li><strong>获取当前时间</strong>，毫秒数</li>
+<li>按<strong>顺序依次向N个Redis节点执行获取锁操作</strong>，该获取操作跟前面基于单Redis节点获取锁过程相同，为了保证在某个Redis节点不可用的时候算法能够继续运行，该获取锁操作还有一个<strong>超时时间</strong>，几十毫秒量级，它要<strong>远小于锁的有效时间</strong>。客户端在向某个Redis节点获取锁失败后，应该立即尝试下一个Redis节点，这里的失败应该<strong>包含任何类型的失败</strong>，如该Redis节点不可用、该Redis节点上的锁已经被其它客户端持有</li>
+<li>计算整个获取锁的过程总共消耗了多长时间，计算方法是用当前时间减去第1步记录的时间。若客户端从大多数Redis节点即**<code>&gt;= N/2+1</code><strong>成功获取到了锁，且</strong>获取锁总耗时<strong>没有超过</strong>锁的有效时间**，则此时客户端才认为最终获取锁成功；否则认为最终获取锁失败</li>
+<li>若<strong>最终获取锁成功</strong>，则该<strong>锁的有效时间应该重新计算</strong>，它等于<strong>最初的锁的有效时间</strong>减去第3步计算出来的<strong>获取锁消耗的时间</strong></li>
+<li>若最终获取锁失败了，可能由于获取到锁的Redis节点个数少于**<code>N/2+1</code><strong>，或整个获取锁的过程</strong>耗时超过了锁的最初有效时间<strong>，则客户端应该</strong>立即<strong>向</strong>所有<strong>Redis节点</strong>发起释放锁操作**</li>
+</ul>
+<p><strong>释放锁</strong>的过程比较简单：客户端向<strong>所有<code>Redis</code>节点发起释放锁的操作</strong>，不管这些节点当时在获取锁时成功与否。在最后释放锁时，客户端应该向所有Redis节点发起<strong>释放锁</strong>的操作，即使当时向某个节点<strong>获取锁没有成功</strong>，在释放锁时也不应该漏掉该节点。因为若客户端发给某个Redis节点<strong>获取锁的请求成功到达了该Redis节点</strong>，该节点也成功执行了SET操作，但返回给客户端的<strong>响应包却丢失</strong>。在客户端看来，获取锁的请求由于超时而失败了，但在Redis这边看来，加锁已经成功了。因此释放锁时，客户端也应该对当时获取锁失败的那些Redis节点同样发起请求。</p>
+<p>但由于N个Redis节点中的大多数能正常工作就能保证Redlock正常工作，因此理论上它的可用性更高。单Redis节点的分布式锁在failover的时锁失效的问题，在Redlock中不存在了，但若有节点发生崩溃重启，<strong>还是会对锁的安全性有影响</strong>，具体的影响程度跟<strong>Redis对数据的持久化程度有关</strong>。</p>
+<p>假设一共有5个Redis节点**<code>A、B、C、D、E</code><strong>，若</strong>客户端1<strong>成功锁住了</strong><code>A、B、C</code><strong>，获取锁成功， 但D和E没有锁住，节点C崩溃重启了，但</strong><code>客户端1</code><strong>在C上加的</strong>锁没有持久化<strong>下来，丢失了，</strong>节点C重启后<strong>，</strong>客户端2<strong>锁住了</strong><code>C、D、E</code><strong>， 获取锁成功，</strong>针对同一资源客户端1和客户端2同时获得了锁**。</p>
+<p>Redis的**<code>AOF</code><strong>持久化方式</strong>默认<strong>是</strong>每秒写一次磁盘<strong>，最坏情况下可能丢失1秒的数据，为了尽可能不丢数据，Redis允许设置成每次修改数据都进行fsync，但这会降低性能。当然，即使执行了fsync也仍然有可能丢失数据，这取决于系统而不是Redis的实现。故上面分析的由于节点重启引发的锁失效问题，总是有可能出现的。为了应对这一问题，可通过</strong>延迟重启<strong>，即</strong>一个节点崩溃后，先不立即重启它，而是等待一段时间再重启<strong>，该时间应该</strong>大于锁的有效时间<strong>，该节点在</strong>重启前所参与的锁都会过期**，它在重启后就不会对现有的锁造成影响。</p>
+<h2 id="Redisson锁原理"><a href="#Redisson锁原理" class="headerlink" title="Redisson锁原理"></a>Redisson锁原理</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br></pre></td><td class="code"><pre><span class="line">public class Redisson implements RedissonClient &#123;</span><br><span class="line">    public RLock getLock(String name) &#123;</span><br><span class="line">        return new RedissonLock(connectionManager.getCommandExecutor(), name);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">public class RedissonLock extends RedissonExpirable implements RLock &#123;</span><br><span class="line">    public RedissonLock(CommandAsyncExecutor commandExecutor, String name) &#123;</span><br><span class="line">        super(commandExecutor, name);</span><br><span class="line">        this.commandExecutor = commandExecutor;</span><br><span class="line">        this.id = commandExecutor.getConnectionManager().getId();</span><br><span class="line">        this.internalLockLeaseTime = commandExecutor.getConnectionManager().getCfg().getLockWatchdogTimeout();</span><br><span class="line">    &#125;</span><br><span class="line">    public void lock(long leaseTime, TimeUnit unit) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            lockInterruptibly(leaseTime, unit);</span><br><span class="line">        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">            Thread.currentThread().interrupt();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public void lockInterruptibly(long leaseTime, TimeUnit unit) throws InterruptedException &#123;</span><br><span class="line">        long threadId = Thread.currentThread().getId(); // 获取当前线程的ID</span><br><span class="line">        Long ttl = tryAcquire(leaseTime, unit, threadId); // 尝试获取锁，并返回锁剩余持有时间</span><br><span class="line">        if (ttl == null) &#123; // 若锁剩余持有时间为null，表示获取锁成功</span><br><span class="line">            return; // 获取锁成功</span><br><span class="line">        &#125;</span><br><span class="line">        RFuture&lt;RedissonLockEntry&gt; future = subscribe(threadId);</span><br><span class="line">        commandExecutor.syncSubscription(future);</span><br><span class="line">        try &#123;</span><br><span class="line">            while (true) &#123;</span><br><span class="line">                ttl = tryAcquire(leaseTime, unit, threadId);</span><br><span class="line">                if (ttl == null) &#123;</span><br><span class="line">                    break;</span><br><span class="line">                &#125;</span><br><span class="line">                if (ttl &gt;= 0) &#123;</span><br><span class="line">                    getEntry(threadId).getLatch().tryAcquire(ttl, TimeUnit.MILLISECONDS);</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    getEntry(threadId).getLatch().acquire();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            unsubscribe(future, threadId);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    private Long tryAcquire(long leaseTime, TimeUnit unit, long threadId) &#123;</span><br><span class="line">        return get(tryAcquireAsync(leaseTime, unit, threadId));</span><br><span class="line">    &#125;</span><br><span class="line">    private &lt;T&gt; RFuture&lt;Long&gt; tryAcquireAsync(long leaseTime, TimeUnit unit, final long threadId) &#123;</span><br><span class="line">        if (leaseTime != -1) &#123; // 设置了超时时间的逻辑</span><br><span class="line">            return tryLockInnerAsync(leaseTime, unit, threadId, RedisCommands.EVAL_LONG);</span><br><span class="line">        &#125;</span><br><span class="line">        // 未设置超时时间默认设置超时时间为30s</span><br><span class="line">        RFuture&lt;Long&gt; ttlRemainingFuture = tryLockInnerAsync(commandExecutor.getConnectionManager().getCfg().getLockWatchdogTimeout(), TimeUnit.MILLISECONDS, threadId, RedisCommands.EVAL_LONG);</span><br><span class="line">        ttlRemainingFuture.addListener(new FutureListener&lt;Long&gt;() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void operationComplete(Future&lt;Long&gt; future) throws Exception &#123;</span><br><span class="line">                if (!future.isSuccess()) &#123;</span><br><span class="line">                    return;</span><br><span class="line">                &#125;</span><br><span class="line">                Long ttlRemaining = future.getNow();</span><br><span class="line">                if (ttlRemaining == null) &#123; // 若当前锁还没有释放，则给当前锁续超时时间</span><br><span class="line">                    scheduleExpirationRenewal(threadId);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        return ttlRemainingFuture;</span><br><span class="line">    &#125;</span><br><span class="line">    &lt;T&gt; RFuture&lt;T&gt; tryLockInnerAsync(long leaseTime, TimeUnit unit, long threadId, RedisStrictCommand&lt;T&gt; command) &#123;</span><br><span class="line">        internalLockLeaseTime = unit.toMillis(leaseTime);</span><br><span class="line">		// 异步执行lua命令获取锁，若获取锁成功返回null，否则返回剩余持有时间</span><br><span class="line">        return commandExecutor</span><br><span class="line">            .evalWriteAsync(getName(), LongCodec.INSTANCE, command,</span><br><span class="line">                            &quot;if (redis.call(&#x27;exists&#x27;, KEYS[1]) == 0) then &quot; +  // 判断锁是否存在</span><br><span class="line">                            &quot;redis.call(&#x27;hset&#x27;, KEYS[1], ARGV[2], 1); &quot; + 	// 将锁的的状态设置为1</span><br><span class="line">                            &quot;redis.call(&#x27;pexpire&#x27;, KEYS[1], ARGV[1]); &quot; +	// 给锁加上失效时间</span><br><span class="line">                            &quot;return nil; &quot; +</span><br><span class="line">                            &quot;end; &quot; +</span><br><span class="line">                            &quot;if (redis.call(&#x27;hexists&#x27;, KEYS[1], ARGV[2]) == 1) then &quot; +  // 重入锁的处理，锁存在，且加锁对象是当前线程</span><br><span class="line">                            &quot;redis.call(&#x27;hincrby&#x27;, KEYS[1], ARGV[2], 1); &quot; + // 将锁加一</span><br><span class="line">                            &quot;redis.call(&#x27;pexpire&#x27;, KEYS[1], ARGV[1]); &quot; + // 重置失效时间</span><br><span class="line">                            &quot;return nil; &quot; +</span><br><span class="line">                            &quot;end; &quot; +</span><br><span class="line">                            &quot;return redis.call(&#x27;pttl&#x27;, KEYS[1]);&quot;, // 返回锁剩余的失效时间</span><br><span class="line">                            Collections.&lt;Object&gt;singletonList(getName()), internalLockLeaseTime, getLockName(threadId));</span><br><span class="line">    &#125;</span><br><span class="line">    private void scheduleExpirationRenewal(final long threadId) &#123;</span><br><span class="line">        if (expirationRenewalMap.containsKey(getEntryName())) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        // 每10s执行一次</span><br><span class="line">        Timeout task = commandExecutor.getConnectionManager().newTimeout(new TimerTask() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run(Timeout timeout) throws Exception &#123;</span><br><span class="line">                RFuture&lt;Boolean&gt; future = commandExecutor</span><br><span class="line">                    .evalWriteAsync(getName(), LongCodec.INSTANCE, RedisCommands.EVAL_BOOLEAN,</span><br><span class="line">                                    &quot;if (redis.call(&#x27;hexists&#x27;, KEYS[1], ARGV[2]) == 1) then &quot; +	// 若KEY存在则返回true，否则返回false</span><br><span class="line">                                    &quot;redis.call(&#x27;pexpire&#x27;, KEYS[1], ARGV[1]); &quot; + // 重置超时时间</span><br><span class="line">                                    &quot;return 1; &quot; +</span><br><span class="line">                                    &quot;end; &quot; +</span><br><span class="line">                                    &quot;return 0;&quot;,</span><br><span class="line">                                    Collections.&lt;Object&gt;singletonList(getName()), internalLockLeaseTime, getLockName(threadId));</span><br><span class="line">                future.addListener(new FutureListener&lt;Boolean&gt;() &#123;</span><br><span class="line">                    @Override</span><br><span class="line">                    public void operationComplete(Future&lt;Boolean&gt; future) throws Exception &#123;</span><br><span class="line">                        expirationRenewalMap.remove(getEntryName());</span><br><span class="line">                        if (!future.isSuccess()) &#123;</span><br><span class="line">                            return;</span><br><span class="line">                        &#125;</span><br><span class="line">                        if (future.getNow()) &#123; // 若当前锁还没有释放，则给当前锁续超时时间</span><br><span class="line">                            scheduleExpirationRenewal(threadId);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, internalLockLeaseTime / 3, TimeUnit.MILLISECONDS);</span><br><span class="line">        if (expirationRenewalMap.putIfAbsent(getEntryName(), task) != null) &#123;</span><br><span class="line">            task.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="LUA脚本"><a href="#LUA脚本" class="headerlink" title="LUA脚本"></a>LUA脚本</h2><p>Redis在2.6推出了脚本功能，允许开发者使用Lua语言编写脚本传到Redis中执行：</p>
+<ul>
+<li><strong>减少网络开销</strong>：本来5次网络请求的操作，可用一个请求完成，原先5次请求的逻辑放在redis服务器上完成。使用脚本，减少了网络往返时延。<strong>这点跟管道类似</strong>。</li>
+<li><strong>原子操作</strong>：Redis会将整个脚本作为一个整体执行，中间不会被其他命令插入。<strong>管道不是原子的，不过redis的批量操作命令是原子。</strong></li>
+<li><strong>替代redis的事务功能</strong>：redis自带的事务功能很鸡肋，而redis的lua脚本几乎实现了常规的事务功能，官方推荐如果要使用redis的事务功能可以用redis lua替代。</li>
+</ul>
+<p>可以使用EVAL命令对Lua脚本进行求值。EVAL命令的格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EVAL script numkeys key [key ...] arg [arg ...]</span><br></pre></td></tr></table></figure>
+
+<p>script参数是一段Lua脚本程序，它会被运行在Redis服务器上下文中，**<code>numkeys</code>参数<strong>用于</strong>指定键名参数的个数<strong>。键名参数</strong><code>key [key ...]</code><strong>从EVAL的第三个参数开始算起，表示在脚本中所用到的那些Redis键(key)，</strong>这些键名参数可在Lua中通过全局变量<code>KEYS</code>数组<strong>，用</strong>1为基址**的形式访问KEYS[1]，KEYS[2] 以此类推。</p>
+<p>在命令的最后不是键名参数的附加参数**<code>arg [arg ...]</code><strong>，可在Lua中通过全局变量</strong>ARGV<strong>数组访问，访问的形式和KEYS变量类似(ARGV[1]、ARGV[2]，在Lua脚本中，可使用</strong>redis.call()**函数来执行Redis命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">jedis.set(&quot;product_stock_10016&quot;, &quot;15&quot;);  //初始化商品10016的库存</span><br><span class="line">String script = &quot; local count = redis.call(&#x27;get&#x27;, KEYS[1]) &quot; +</span><br><span class="line">    &quot; local a = tonumber(count) &quot; +</span><br><span class="line">    &quot; local b = tonumber(ARGV[1]) &quot; +</span><br><span class="line">    &quot; if a &gt;= b then &quot; +</span><br><span class="line">    &quot;   redis.call(&#x27;set&#x27;, KEYS[1], a-b) &quot; +</span><br><span class="line">    &quot;   return 1 &quot; +</span><br><span class="line">    &quot; end &quot; +</span><br><span class="line">    &quot; return 0 &quot;;</span><br><span class="line">Object obj = jedis.eval(script, Arrays.asList(&quot;product_stock_10016&quot;), Arrays.asList(&quot;10&quot;));</span><br><span class="line">System.out.println(obj);</span><br></pre></td></tr></table></figure>
+
+<p><strong>不要在<code>Lua</code>脚本中出现死循环和耗时的运算</strong>，否则redis会阻塞，将不接受其他的命令，所以使用时要注意不能出现死循环、耗时的运算。redis是单进程、单线程执行脚本。**管道不会阻塞<code>redis</code>**。</p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Gateway源码分析
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">Redis安装</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
