@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>访问者模式 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="设计模式">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="访问者模式是一种集中规整模式，特别适用于大规模重构的项目，通过访问者模式可以很容易把一些功能进行梳理。还可以与其他模式混编建立一套自己的过滤器或者拦截器。 访问者模式是对迭代器模式的扩充，可以遍历不同的对象，然后执行不同的操作，也就是针对访问的对象不同， 执行不同的操作。 访问者模式还可以充当**拦截器Interceptor**角色 。 访问者模式能把处理方法从数据结构中分离出来，并可以根据需要增">
+<meta property="og:type" content="article">
+<meta property="og:title" content="访问者模式">
+<meta property="og:url" content="http://example.com/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="访问者模式是一种集中规整模式，特别适用于大规模重构的项目，通过访问者模式可以很容易把一些功能进行梳理。还可以与其他模式混编建立一套自己的过滤器或者拦截器。 访问者模式是对迭代器模式的扩充，可以遍历不同的对象，然后执行不同的操作，也就是针对访问的对象不同， 执行不同的操作。 访问者模式还可以充当**拦截器Interceptor**角色 。 访问者模式能把处理方法从数据结构中分离出来，并可以根据需要增">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2016-01-04T05:50:20.000Z">
+<meta property="article:modified_time" content="2022-06-15T02:02:13.491Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="设计模式">
+<meta name="twitter:card" content="summary">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file active"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-设计模式/行为型模式/访问者模式" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">行为型模式</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">
+            <time datetime="2016-01-04T05:50:20.000Z" itemprop="datePublished">2016-01-04</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            访问者模式
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <p>访问者模式是一种<strong>集中规整模式</strong>，特别适用于<strong>大规模重构的项目</strong>，通过访问者模式可以很容易把一些功能进行梳理。还可以与其他模式混编建立一套自己的<strong>过滤器</strong>或者<strong>拦截器</strong>。</p>
+<p>访问者模式是<strong>对迭代器模式的扩充</strong>，可以遍历不同的对象，然后执行不同的操作，也就是针对访问的对象不同， 执行不同的操作。 访问者模式还可以充当**拦截器<code>Interceptor</code>**角色 。</p>
+<p>访问者模式能把<strong>处理方法从数据结构中分离出来</strong>，并可以根据需要增加新的处理方法，且不用修改原来的程序代码与数据结构，这提高了程序的<strong>扩展性和灵活性</strong>。</p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>封装一些作用于某种<strong>数据结构中的各元素的操作</strong>，它可以在<strong>不改变数据结构的前提下</strong>定义作用于这些元素的<strong>新的操作</strong>。</p>
+<p>将作用于某种<strong>数据结构</strong>中的<strong>各元素的操作分离出来</strong>封装成独立的类，使其在<strong>不改变数据结构的前提下</strong>可以添加作用于这些元素的新的操作，<strong>为数据结构中的每个元素提供多种访问方式</strong>。它将对<strong>数据的操作</strong>与<strong>数据结构</strong>进行<strong>分离</strong>，是<strong>行为类模式</strong>中<strong>最复杂</strong>的一种模式。</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p><strong>抽象访问者<code>Visitor</code><strong>：定义一个</strong>访问具体元素的接口</strong>，为每个具体元素类对应一个访问操作**<code>visit()</code>** ，该操作中的参数类型标识了被访问的具体元素。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public interface Visitor &#123;</span><br><span class="line">    void visit(ConcreteElementA element);</span><br><span class="line">    void visit(ConcreteElementB element);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>**具体访问者角色<code>ConcreteVisitor</code>**：实现抽象访问者角色中声明的各个访问操作，确定访问者访问一个元素时的具体功能。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">public class ConcreteVisitorA implements Visitor &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void visit(ConcreteElementA element) &#123;</span><br><span class="line">        System.out.println(&quot;具体访问者A访问--&gt;&quot; + element.operationA());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void visit(ConcreteElementB element) &#123;</span><br><span class="line">        System.out.println(&quot;具体访问者A访问--&gt;&quot; + element.operationB());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class ConcreteVisitorB implements Visitor &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void visit(ConcreteElementA element) &#123;</span><br><span class="line">        System.out.println(&quot;具体访问者B访问--&gt;&quot; + element.operationA());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void visit(ConcreteElementB element) &#123;</span><br><span class="line">        System.out.println(&quot;具体访问者B访问--&gt;&quot; + element.operationB());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>**抽象元素角色<code>Element</code><strong>：声明一个包含接受操作</strong><code>accept()</code>**的接口，被接受的访问者对象作为accept()方法的参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public interface Element &#123;</span><br><span class="line">    void accept(Visitor visitor);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>具体元素角色<code>ConcreteElement</code><strong>：实现抽象元素角色提供的 accept() 操作，其方</strong>法体通常都是<code>visitor.visit(this)</code><strong>，另外具体元素中</strong>可能还包含本身业务逻辑的相关操作</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">public class ConcreteElementA implements Element &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void accept(Visitor visitor) &#123;</span><br><span class="line">        visitor.visit(this);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public String operationA() &#123;</span><br><span class="line">        return &quot;具体元素A的操作。&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class ConcreteElementB implements Element &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void accept(Visitor visitor) &#123;</span><br><span class="line">        visitor.visit(this);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public String operationB() &#123;</span><br><span class="line">        return &quot;具体元素B的操作。&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>对象结构角色<code>ObjectStructure</code><strong>：是一个</strong>包含元素角色的容器</strong>，提供让访问者对象遍历容器中的所有元素的方法，通常由 List、Set、Map 等聚合类实现。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">public class ObjectStructure &#123;</span><br><span class="line">    private List&lt;Element&gt; list = new ArrayList&lt;Element&gt;();</span><br><span class="line"></span><br><span class="line">    public void accept(Visitor visitor) &#123;</span><br><span class="line">        for (Element element : list) &#123;</span><br><span class="line">            element.accept(visitor);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void add(Element element) &#123;</span><br><span class="line">        list.add(element);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void remove(Element element) &#123;</span><br><span class="line">        list.remove(element);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        ObjectStructure os = new ObjectStructure();</span><br><span class="line">        os.add(new ConcreteElementA());</span><br><span class="line">        os.add(new ConcreteElementB());</span><br><span class="line">        Visitor visitor = new ConcreteVisitorA();</span><br><span class="line">        os.accept(visitor);</span><br><span class="line">        System.out.println(&quot;------------------------&quot;);</span><br><span class="line">        visitor = new ConcreteVisitorB();</span><br><span class="line">        os.accept(visitor);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h2><ul>
+<li><strong>扩展性好</strong>：能够在不修改对象结构中的元素的情况下，为对象结构中的元素添加新的功能。</li>
+<li><strong>复用性好</strong>：可以通过访问者来定义整个对象结构通用的功能，从而提高系统的复用程度。</li>
+<li><strong>灵活性好</strong>：访问者模式将数据结构与作用于结构上的操作解耦，使得操作集合可相对自由地演化而不影响系统的数据结构。</li>
+<li><strong>符合单一职责原则</strong>：访问者模式把相关行为封装在一起构成一个访问者，使每个访问者功能都比较单一。</li>
+</ul>
+<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><ul>
+<li><strong>增加新的元素类很困难</strong>：每增加一个新的元素类，都要在每个具体访问者类中增加相应的具体操作，<strong>违背开闭原则</strong>。</li>
+<li><strong>破坏封装</strong>：<strong>具体元素对访问者公布细节</strong>，这<strong>破坏了</strong>对象的<strong>封装性</strong>。</li>
+<li><strong>违反了依赖倒置原则</strong>：访问者模式<strong>依赖了具体类</strong>，而没有依赖抽象类。</li>
+</ul>
+<h2 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h2><ul>
+<li>需要对一个对象结构中的对象进行<strong>很多不同并且不相关的操作</strong>，而你想避免让这些操作污染这些对象的类</li>
+<li>数据元素相对稳定而访问方式多种多样的数据结构</li>
+<li>对象结构相对稳定，但其操作算法经常变化的程序。</li>
+<li>对象结构中的对象需要提供多种不同且不相关的操作，而且要避免让这些操作的变化影响对象的结构。</li>
+<li>对象结构包含很多类型的对象，希望对这些对象实施一些依赖于其具体类型的操作。</li>
+</ul>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><ul>
+<li>统计功能：数据统计和报表的批处理通过访问者模式来处理会比较简单</li>
+<li>多个访问者：用于展示的访问者和用于汇总的访问者</li>
+</ul>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/hello-hexo/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Hello hexo
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">迭代器模式</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

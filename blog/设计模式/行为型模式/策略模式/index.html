@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>策略模式 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="设计模式">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="当实现某一个功能存在多种算法或者策略，可以根据环境或者条件的不同选择不同的算法或者策略来完成该功能。 如果使用多重条件转移语句实现即硬编码，不但使条件语句变得很复杂，而且增加、删除或更换算法要修改原代码，不易维护，违背开闭原则。采用策略模式就能很好解决该问题。 定义定义一系列算法，并将每个算法封装起来，使它们可以相互替换，且算法的变化不会影响使用算法的客户。 实现策略模式是准备一组算法，并将这组算">
+<meta property="og:type" content="article">
+<meta property="og:title" content="策略模式">
+<meta property="og:url" content="http://example.com/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="当实现某一个功能存在多种算法或者策略，可以根据环境或者条件的不同选择不同的算法或者策略来完成该功能。 如果使用多重条件转移语句实现即硬编码，不但使条件语句变得很复杂，而且增加、删除或更换算法要修改原代码，不易维护，违背开闭原则。采用策略模式就能很好解决该问题。 定义定义一系列算法，并将每个算法封装起来，使它们可以相互替换，且算法的变化不会影响使用算法的客户。 实现策略模式是准备一组算法，并将这组算">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2016-01-04T05:20:20.000Z">
+<meta property="article:modified_time" content="2022-06-10T10:12:09.395Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="设计模式">
+<meta name="twitter:card" content="summary">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file active"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-设计模式/行为型模式/策略模式" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">行为型模式</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">
+            <time datetime="2016-01-04T05:20:20.000Z" itemprop="datePublished">2016-01-04</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            策略模式
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <p>当实现某一个功能存在多种算法或者策略，可以根据环境或者条件的不同选择不同的算法或者策略来完成该功能。</p>
+<p>如果使用<strong>多重条件转移语句</strong>实现即硬编码，不但使条件语句变得很复杂，而且增加、删除或更换算法要修改原代码，不易维护，违背开闭原则。采用策略模式就能很好解决该问题。</p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>定义一系列算法，并将每个算法封装起来，使它们可以<strong>相互替换</strong>，且算法的变化不会影响使用算法的客户。</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>策略模式是准备一组算法，并将这组算法封装到一系列的策略类里面，作为一个抽象策略类的子类。策略模式的重心不是如何实现算法，而是如何组织这些算法，从而让程序结构更加灵活，具有更好的维护性和扩展性。</p>
+<p><strong><code>Strategy</code>抽象策略类</strong>定义一个公共接口，各种不同算法以不同方式实现该接口，环境角色使用该接口调用不同的算法</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public interface Strategy &#123;</span><br><span class="line">    void strategy();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong><code>ConcreteStrategy</code>具体策略类</strong>，实现了抽象策略定义的接口，<strong>提供具体的算法实现</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class ConcreteStrategyA implements Strategy &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void strategy() &#123;</span><br><span class="line">        System.out.println(&quot;具体策略A的策略方法被访问！&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class ConcreteStrategyB implements Strategy &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void strategy() &#123;</span><br><span class="line">        System.out.println(&quot;具体策略B的策略方法被访问！&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>Context</code>环境类</strong>，持有一个策略类的引用，最终给客户端调用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public class Context &#123;</span><br><span class="line">    private Strategy strategy;</span><br><span class="line"></span><br><span class="line">    public void setStrategy(Strategy strategy) &#123;</span><br><span class="line">        this.strategy = strategy;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void strategy() &#123;</span><br><span class="line">        this.strategy.strategy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端使用</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    Context c = new Context();</span><br><span class="line">    Strategy strategyA = new ConcreteStrategyA();</span><br><span class="line">    c.setStrategy(strategyA);</span><br><span class="line">    c.strategy();</span><br><span class="line">    Strategy strategyB = new ConcreteStrategyB();</span><br><span class="line">    c.setStrategy(strategyB);</span><br><span class="line">    c.strategy();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果一个策略家族的具体策略数量超过4个，则需要考虑使用混合模式，解决策略类膨胀和对外暴露的问题。</p>
+<h2 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h2><ul>
+<li>多重条件语句不易维护，而使用策略模式可以<strong>避免使用多重条件语句</strong></li>
+<li>策略模式提供了一系列的可供<strong>重用的算法族</strong>，恰当使用继承可以把算法族的公共代码转移到父类里面，从而<strong>避免重复的代码</strong></li>
+<li><strong>自由切换</strong>，策略模式可以提供相同行为的不同实现，客户可以根据不同时间或空间要求选择不同的</li>
+<li>策略模式提供了<strong>对开闭原则的完美支持</strong>，可以在不修改原代码的情况下，灵活增加新算法</li>
+<li>策略模式把算法的使用放到环境类中，而算法的实现移到具体策略类中，实现了二者的分离</li>
+</ul>
+<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><ul>
+<li>会造成很多的策略类，增加维护难度</li>
+<li>所有策略类都需要对外暴露，上层模块必须知道有哪些策略，才能决定使用哪个策略，与迪米特法则相违<br>背</li>
+</ul>
+<h2 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h2><ul>
+<li>多个类只有在算法或行为上稍有不同的场景</li>
+<li>算法需要自由切换的场景</li>
+<li>需要屏蔽算法规则的场景</li>
+</ul>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><p>策略枚举，把原有定义在抽象策略中的方法移植到枚举中，每个枚举成员就成为一个具体策略 。略枚举是一个非常优秀和方便的模式，但是它受枚举类型的限制，每个枚举项都是public、final、static的，扩展性受到了一定的约束，因此在系统开发中，策略枚举一般担当不经常发生变化的角色。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">public enum StrategyEnum &#123;</span><br><span class="line">    ADD(&quot;+&quot;)&#123;</span><br><span class="line">        public int exec(int a,int b)&#123;</span><br><span class="line">            return a + b;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    SUB(&quot;-&quot;)&#123;</span><br><span class="line">        public int exec(int a,int b)&#123;</span><br><span class="line">            return a - b;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    String value;</span><br><span class="line">    private StrategyEnum(String _value)&#123;</span><br><span class="line">        this.value = _value;</span><br><span class="line">    &#125;</span><br><span class="line">    public String getValue()&#123;</span><br><span class="line">        return this.value;</span><br><span class="line">    &#125;</span><br><span class="line">    public abstract int exec(int a,int b);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    int a = Integer.parseInt(args[0]);</span><br><span class="line">    int b = Integer.parseInt(args[2]);</span><br><span class="line">    System.out.println(&quot;运行结果为： &quot; + StrategyEnum.ADD.exec(a, b));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    观察者模式
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">中介者模式</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

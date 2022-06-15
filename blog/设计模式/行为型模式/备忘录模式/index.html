@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>备忘录模式 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="设计模式">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="备忘录模式又叫快照模式，就是一个对象的备份模式，提供了一种程序数据的备份方法。当后悔时能撤销当前操作，使数据恢复到它原先的状态。 备忘录创建出来就要在“最近”的代码中使用，要主动管理它的生命周期，建立就要使用，不使用就要立刻删除其引用。不要在频繁建立备份的场景中使用备忘录模式。 定义在不破坏封装性的前提下，捕获一个对象的内部状态，并在该对象之外保存这个状态。这样以后就可将该对象恢复到原先保存的状态">
+<meta property="og:type" content="article">
+<meta property="og:title" content="备忘录模式">
+<meta property="og:url" content="http://example.com/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="备忘录模式又叫快照模式，就是一个对象的备份模式，提供了一种程序数据的备份方法。当后悔时能撤销当前操作，使数据恢复到它原先的状态。 备忘录创建出来就要在“最近”的代码中使用，要主动管理它的生命周期，建立就要使用，不使用就要立刻删除其引用。不要在频繁建立备份的场景中使用备忘录模式。 定义在不破坏封装性的前提下，捕获一个对象的内部状态，并在该对象之外保存这个状态。这样以后就可将该对象恢复到原先保存的状态">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F%E7%B1%BB%E5%9B%BE.png">
+<meta property="article:published_time" content="2016-01-04T03:30:20.000Z">
+<meta property="article:modified_time" content="2022-06-15T02:51:16.105Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="设计模式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F%E7%B1%BB%E5%9B%BE.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file active"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-设计模式/行为型模式/备忘录模式" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">行为型模式</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">
+            <time datetime="2016-01-04T03:30:20.000Z" itemprop="datePublished">2016-01-04</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            备忘录模式
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <p><strong>备忘录模式</strong>又叫<strong>快照模式</strong>，就是<strong>一个对象的备份模式</strong>，提供了<strong>一种程序数据的备份方法</strong>。当后悔时能撤销当前操作，使数据恢复到它原先的状态。</p>
+<p>备忘录创建出来就要在“最近”的代码中使用，<strong>要主动管理它的生命周期</strong>，建立就要使用，不使用就要<strong>立刻删除</strong>其引用。不要在<strong>频繁建立备份的场景</strong>中使用备忘录模式。</p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>在<strong>不破坏封装性</strong>的前提下，捕获一个对象的<strong>内部状态</strong>，并<strong>在该对象之外保存这个状态</strong>。这样以后就可将该对象<strong>恢复到原先保存的状态</strong>。<br><img src="/../../../assets/png/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F%E7%B1%BB%E5%9B%BE.png" alt="备忘录模式类图"></p>
+<p>**发起人角色<code>Originator</code>**：记录当前时刻的内部状态信息，提供创建备忘录和恢复备忘录数据的功能，实现其他业务功能，它可以访问备忘录里的所有信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class Originator &#123;</span><br><span class="line">    private String state;</span><br><span class="line">    public void setState(String state) &#123;</span><br><span class="line">        this.state = state;</span><br><span class="line">    &#125;</span><br><span class="line">    public String getState() &#123;</span><br><span class="line">        return state;</span><br><span class="line">    &#125;</span><br><span class="line">    public Memento createMemento() &#123;</span><br><span class="line">        return new Memento(state);</span><br><span class="line">    &#125;</span><br><span class="line">    public void restoreMemento(Memento m) &#123;</span><br><span class="line">        this.setState(m.getState());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>**备忘录角色<code>Memento</code>**：负责存储发起人的内部状态，在需要的时候提供这些内部状态给发起人。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class Memento &#123;</span><br><span class="line">    private String state;</span><br><span class="line"></span><br><span class="line">    public Memento(String state) &#123;</span><br><span class="line">        this.state = state;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setState(String state) &#123;</span><br><span class="line">        this.state = state;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public String getState() &#123;</span><br><span class="line">        return state;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>**管理者角色<code>Caretaker</code>**：对备忘录进行管理，提供保存与获取备忘录的功能，但其不能对备忘录的内容进行访问与修改。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public class Caretaker &#123;</span><br><span class="line">    private Memento memento;</span><br><span class="line">    public void setMemento(Memento m) &#123;</span><br><span class="line">        memento = m;</span><br><span class="line">    &#125;</span><br><span class="line">    public Memento getMemento() &#123;</span><br><span class="line">        return memento;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>客户端代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class MementoPattern &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Originator or = new Originator();</span><br><span class="line">        Caretaker cr = new Caretaker();</span><br><span class="line">        or.setState(&quot;S0&quot;);</span><br><span class="line">        System.out.println(&quot;初始状态:&quot; + or.getState());</span><br><span class="line">        cr.setMemento(or.createMemento()); //保存状态</span><br><span class="line">        or.setState(&quot;S1&quot;);</span><br><span class="line">        System.out.println(&quot;新的状态:&quot; + or.getState());</span><br><span class="line">        or.restoreMemento(cr.getMemento()); //恢复状态</span><br><span class="line">        System.out.println(&quot;恢复状态:&quot; + or.getState());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h2><ul>
+<li>提供了一种<strong>可以恢复状态的机制</strong>。当用户需要时能够比较方便地将数据恢复到某个历史的状态</li>
+<li>实现了<strong>内部状态的封装</strong>。除了创建它的发起人之外，其他对象都不能够访问这些状态信息</li>
+<li>发起人不需要管理和保存其内部状态的各个备份，所有状态信息都保存在备忘录中，并由管理者进行管理，符合单一职责原则</li>
+</ul>
+<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><ul>
+<li><strong>资源消耗大</strong>。如果要保存的内部状态信息过多或者特别频繁，将会占用比较大的内存资源</li>
+</ul>
+<h2 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h2><ul>
+<li>需要保存和<strong>恢复数据</strong>的相关状态场景，游戏中的存档功能</li>
+<li>提供一个<strong>可回滚<code>rollback</code>的操作</strong>，如Word、记事本、Photoshop，Eclipse 等软件在编辑时按 Ctrl+Z 组合键，还有数据库中事务操作</li>
+<li>需要监控的副本场景中</li>
+</ul>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><h3 id="clone方式的备忘录"><a href="#clone方式的备忘录" class="headerlink" title="clone方式的备忘录"></a>clone方式的备忘录</h3><p><strong>发起人角色<code>Originator</code></strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">class OriginatorPrototype implements Cloneable &#123;</span><br><span class="line">    private String state;</span><br><span class="line">    public void setState(String state) &#123;</span><br><span class="line">        this.state = state;</span><br><span class="line">    &#125;</span><br><span class="line">    public String getState() &#123;</span><br><span class="line">        return state;</span><br><span class="line">    &#125;</span><br><span class="line">    public OriginatorPrototype createMemento() &#123;</span><br><span class="line">        return this.clone();</span><br><span class="line">    &#125;</span><br><span class="line">    public void restoreMemento(OriginatorPrototype opt) &#123;</span><br><span class="line">        this.setState(opt.getState());</span><br><span class="line">    &#125;</span><br><span class="line">    public OriginatorPrototype clone() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            return (OriginatorPrototype) super.clone();</span><br><span class="line">        &#125; catch (CloneNotSupportedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>管理者角色<code>Caretaker</code></strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">class PrototypeCaretaker &#123;</span><br><span class="line">    private OriginatorPrototype opt;</span><br><span class="line">    public void setMemento(OriginatorPrototype opt) &#123;</span><br><span class="line">        this.opt = opt;</span><br><span class="line">    &#125;</span><br><span class="line">    public OriginatorPrototype getMemento() &#123;</span><br><span class="line">        return opt;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="客户端代码："><a href="#客户端代码：" class="headerlink" title="客户端代码："></a>客户端代码：</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class Client &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        OriginatorPrototype or = new OriginatorPrototype();</span><br><span class="line">        PrototypeCaretaker cr = new PrototypeCaretaker();</span><br><span class="line">        or.setState(&quot;S0&quot;);</span><br><span class="line">        System.out.println(&quot;初始状态:&quot; + or.getState());</span><br><span class="line">        cr.setMemento(or.createMemento()); //保存状态</span><br><span class="line">        or.setState(&quot;S1&quot;);</span><br><span class="line">        System.out.println(&quot;新的状态:&quot; + or.getState());</span><br><span class="line">        or.restoreMemento(cr.getMemento()); //恢复状态</span><br><span class="line">        System.out.println(&quot;恢复状态:&quot; + or.getState());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="多状态的备忘录模式"><a href="#多状态的备忘录模式" class="headerlink" title="多状态的备忘录模式"></a>多状态的备忘录模式</h2><p>可以通过对 <strong>备忘录角色<code>Memento</code></strong> 角色进行扩展，将存储状态的字段用Map来存储多个状态，从而实现多状态备忘录模式。</p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    模板方法模式
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">命令模式</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
