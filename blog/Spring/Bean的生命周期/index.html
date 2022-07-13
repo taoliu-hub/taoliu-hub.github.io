@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>Bean的生命周期 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="Spring">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="生命周期首先Bean是通过 ConfigurationClassPostProcessor解析配置类的后置处理器，将Bean从类中注册到BeanFactory中，然后通过getBean方法加载Bean。 首先调用 getSingleton 方法从三级缓存中获取，若获取不到，再通过函数式接口调用 createBean 创建Bean的流程。通过 resolveBeforeInstantiation 方">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Bean的生命周期">
+<meta property="og:url" content="http://example.com/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="生命周期首先Bean是通过 ConfigurationClassPostProcessor解析配置类的后置处理器，将Bean从类中注册到BeanFactory中，然后通过getBean方法加载Bean。 首先调用 getSingleton 方法从三级缓存中获取，若获取不到，再通过函数式接口调用 createBean 创建Bean的流程。通过 resolveBeforeInstantiation 方">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/Spring/invokeAwareMethods.png">
+<meta property="og:image" content="http://example.com/assets/png/Spring/ApplicationContextAwareProcessor.png">
+<meta property="og:image" content="http://example.com/assets/png/Spring/bean_init.png">
+<meta property="og:image" content="http://example.com/assets/png/Spring/Bean%E7%9A%84%E5%90%8E%E7%BD%AE%E5%A4%84%E7%90%86%E5%99%A8%E8%B0%83%E7%94%A8.png">
+<meta property="og:image" content="http://example.com/assets/png/Spring/%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96.png">
+<meta property="og:image" content="http://example.com/assets/png/Spring/%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96Bean%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B.png">
+<meta property="article:published_time" content="2020-10-17T07:08:20.000Z">
+<meta property="article:modified_time" content="2022-07-11T08:51:45.120Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="Spring">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/Spring/invokeAwareMethods.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Spring
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringBoot
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%20Jar%E5%8C%85%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot Jar包启动原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD/">SpringBoot资源加载</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D%E5%8E%9F%E7%90%86/">SpringBoot自动装配原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot启动原理</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Spring/Spring%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/">Spring整体架构</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%87%E9%9D%A2%E7%B1%BB%E8%A7%A3%E6%9E%90/">AOP切面类解析</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B0%83%E7%94%A8/">AOP创建代理与调用</a></li>  <li class="file"><a href="/blog/Spring/BeanDefinition%E8%A7%A3%E6%9E%90%E6%B3%A8%E5%86%8C/">BeanDefinition解析注册</a></li>  <li class="file active"><a href="/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">Bean的生命周期</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">Bean的加载过程</a></li>  <li class="file"><a href="/blog/Spring/Hystrix%E6%80%BB%E7%BB%93/">Hystrix总结</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8/">IoC容器</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">IoC容器加载过程</a></li>  <li class="file"><a href="/blog/Spring/Spring%20Gzip%E5%8E%8B%E7%BC%A9/">Spring Gzip压缩</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">SpringMvc加载机制</a></li>  <li class="file"><a href="/blog/Spring/Spring%E5%88%9D%E5%A7%8B%E5%8C%96%E6%89%A9%E5%B1%95/">Spring初始化扩展</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%A4%84%E7%90%86%E5%88%86%E5%8F%91%E8%AF%B7%E6%B1%82%E5%8E%9F%E7%90%86/">SpringMvc处理分发请求原理</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%BC%82%E6%AD%A5%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/">SpringMvc异步原理及实现</a></li>  <li class="file"><a href="/blog/Spring/Spring%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B7%A8%E7%BA%BF%E7%A8%8B%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB/">Spring线程池跨线程数据共享</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/">事件监听器</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%A7%A3%E6%9E%90%E5%8E%9F%E7%90%86/">事务解析原理</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%B0%83%E7%94%A8%E5%8E%9F%E7%90%86/">事务调用原理</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Test
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Test/IT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">IT测试总结</a></li>  <li class="file"><a href="/blog/Test/UT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">UT测试总结</a></li>  <li class="file"><a href="/blog/Test/JMeter%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">JMeter日常总结</a></li>  <li class="file"><a href="/blog/Test/LoadRunner%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">LoadRunner日常总结</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Spring/Bean的生命周期" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Spring/">Spring</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/Spring/" rel="tag">Spring</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">
+            <time datetime="2020-10-17T07:08:20.000Z" itemprop="datePublished">2020-10-17</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Bean的生命周期
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <h2 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h2><p>首先Bean是通过 <strong><code>ConfigurationClassPostProcessor</code>解析配置类的后置处理器</strong>，将Bean从类中注册到BeanFactory中，然后<strong>通过<code>getBean</code>方法加载Bean</strong>。</p>
+<p>首先调用 <strong><code>getSingleton</code></strong> 方法从<strong>三级缓存</strong>中获取，若获取不到，再通过<strong>函数式接口</strong>调用 <strong><code>createBean</code></strong> 创建Bean的流程。通过 <strong><code>resolveBeforeInstantiation</code></strong> 方法去<strong>第一次</strong>调用Bean的后置处理器，这里调用的是实现了 <strong><code>InstantiationAwareBeanPostProcessor</code></strong> 接口 <strong><code>postProcessBeforeInstantiation</code></strong> 方法的后置处理器，这里主要调用 <strong><code>AbstractAutoProxyCreator</code></strong> 对<strong>AOP切面类进行解析</strong>，并将解析后的数据缓存，即通过 <strong><code>@EnableAspectJAutoProxy</code></strong> 开启了AOP代理，且该类为 <strong><code>Advice</code></strong> 、 <strong><code>Pointcut</code></strong> 、 <strong><code>Advisor</code></strong> 、 <strong><code>AopInfrastructureBean</code></strong> 等接口的<strong>子类</strong>，或该类上有 <strong><code>@Aspect</code>注解</strong>且不是一个被 <strong><code>AspectJ</code>编译过</strong>的类；在这里还可以<strong>自定义一个后置处理器返回一个对象</strong>来阻断后续流程的执行。</p>
+<p>接着调用 <strong><code>doCreateBean</code></strong> 真正去创建Bean，首先回去创建Bean的简单实例，在创建实例的过程中可能会<strong>第二次</strong>调用Bean的后置处理器，这里调用的是实现了 <strong><code>SmartInstantiationAwareBeanPostProcessor</code></strong> 接口 <strong><code>determineCandidateConstructors</code></strong> 方法的后置处理器，这里主要调用 <strong><code>AutowiredAnnotationBeanPostProcessor</code></strong> 来<strong>指定实例化的的构造函数</strong>，通过 <strong><code>@Bean</code>注入的对象会跳过该后置处理器</strong>。</p>
+<p>简单实例化完成后，调用 <strong><code>applyMergedBeanDefinitionPostProcessors</code></strong> 从而<strong>第三次</strong>调用Bean的后置处理器，完成 <strong><code>@Autowired</code>、<code>@Value</code>、<code>@PostConstruct</code>等注解以及自定义的初始化方法等预解析</strong>。调用 <strong><code>AutowiredAnnotationBeanPostProcessor</code></strong> 将 <strong><code>@Autowired</code></strong> 、 <strong><code>@Value</code></strong> 注入信息<strong>预解析</strong>存入 <strong><code>externallyManagedConfigMembers</code></strong> 中，调用 <strong><code>CommonAnnotationBeanPostProcessor</code></strong> 从而调用 <strong><code>InitDestroyAnnotationBeanPostProcessor</code></strong> 将<strong>自定义的初始化方法信息</strong>即 <strong><code>@Bean(initMethod = &quot;initMethod&quot;)</code></strong> 中指定的初始化方法预解析存入 <strong><code>externallyManagedInitMethods</code></strong> 中。</p>
+<p>然后将<strong>早期对象</strong>通过<strong>函数式接口<code>getEarlyBeanReference</code></strong> 存入<strong>第三级缓存<code>singletonFactories</code></strong> 中，这里主要是为了解决<strong>循环依赖</strong>，若<strong>不存在循环依赖，该函数接口不会被调用</strong>，故三级缓存<strong>不会被升级为二级缓存</strong>。在该函数式接口中<strong>第四次</strong>调用了Bean的后置处理器，调用实现了 <strong><code>SmartInstantiationAwareBeanPostProcessor</code></strong> 接口的 <strong><code>getEarlyBeanReference</code></strong> 方法的后置处理器，这里是调用 <strong><code>AbstractAutoProxyCreator</code></strong> 后置处理器，主要作用是给<strong>有AOP代理</strong>的且<strong>产生循环依赖</strong>且<strong>先被加载</strong>的对象<strong>创建<code>AOP</code>代理</strong>，若该Bean<strong>有AOP代理</strong>，但<strong>不存在循环依赖</strong>或<strong>存在循环依赖但后被加载</strong>，则AOP代理是在<strong>第八次</strong>调用后置处理器时，给该Bean<strong>创建动态代理</strong>的。若在该处已经设置了动态代理会将 <strong><code>beanName</code></strong> 加入到 <strong><code>earlyProxyReferences</code></strong> 集合中，<strong>防止第八次调用后置处理器时重复添加动态代理</strong>。</p>
+<p>紧接着调用 <strong><code>populateBean</code></strong> 方法<strong>为Bean的属性进行赋值</strong>，在属性设置前<strong>第五次</strong>调用实现了 <strong><code>InstantiationAwareBeanPostProcessor</code></strong> 接口 <strong><code>postProcessAfterInstantiation</code></strong> 的后置处理器，其作用是<strong>让用户可以自定义属性</strong>，其还可以设置<strong>跳过后续的赋值操作</strong>。</p>
+<p>紧接着调用<strong>第六次</strong>后置处理器，调用实现了 <strong><code>InstantiationAwareBeanPostProcessor</code></strong> 接口 <strong><code>postProcessProperties</code></strong> 的后置处理器，主要是<strong>注入<code>PropertyValues</code>对属性进行赋值</strong>操作，@Autowired、@Value注解是通过 <strong><code>AutowiredAnnotationBeanPostProcessor</code></strong> 中 <strong><code>postProcessProperties</code></strong> 方法调用 <strong><code>InjectionMetadata.inject</code></strong> 方法，若发现 <strong>@Autowired注入的Bean未被创建</strong> ，最终会调用 <strong><code>DependencyDescriptor</code></strong> 的 <strong><code>resolveCandidate</code></strong> 方法，<strong>通过<code>getBean</code></strong> 去创建该Bean。若存在<strong>循环依赖</strong>，给依赖的Bean进行属性赋值时会再次通过getBean调用当前Bean，从而通过 <strong><code>getSingleton</code></strong> 方法中对三级缓存中函数式接口的调用，即调用 <strong><code>getEarlyBeanReference</code></strong> 方法<strong>将三级缓存转换为二级缓存</strong>，返回给依赖的Bean进行赋值操作。</p>
+<p>完成了属性的赋值，接下来就是通过 <strong><code>initializeBean</code></strong> 对Bean的初始化方法的调用，初始化调用前首先通过 <strong><code>invokeAwareMethods</code></strong> 方法对 <strong><code>BeanNameAware</code></strong> 、 <strong><code>BeanClassLoaderAware</code></strong> 、 <strong><code>BeanFactoryAware</code></strong> 三个Aware接口的调用。<br><img src="/../../assets/png/Spring/invokeAwareMethods.png" alt="invokeAwareMethods"></p>
+<p><strong>第七次</strong>Bean的后置处理器调用，通过 <strong><code>InitDestroyAnnotationBeanPostProcessor</code></strong> 接口中调用 <strong><code>LifecycleMetadata.invokeInitMethods</code></strong> 方法来实现初始化前 <strong>@PostConstruct注解的方法的调用</strong> ，以及调用 <strong><code>ApplicationContextAwareProcessor</code></strong> 后置处理器的 <strong><code>postProcessBeforeInitialization</code></strong> 方法，完成 <strong><code>EnvironmentAware</code></strong> 、 <strong><code>EmbeddedValueResolverAware</code></strong> 、 <strong><code>ResourceLoaderAware</code></strong> 、 <strong><code>ApplicationEventPublisherAware</code></strong> 、 <strong><code>MessageSourceAware</code></strong> 、 <strong><code>ApplicationContextAware</code></strong> 、 <strong><code>ImportAware</code></strong> 等Aware接口的调用。<br><img src="/../../assets/png/Spring/ApplicationContextAwareProcessor.png" alt="ApplicationContextAwareProcessor"></p>
+<p>接着调用 <strong><code>invokeInitMethods</code></strong> 方法，若Bean实现了 <strong><code>InitializingBean</code></strong> 接口，则<strong>调用<code>InitializingBean</code>接口的<code>afterPropertiesSet</code>方法</strong>，以及<strong>自定义的初始化方法</strong>的调用即 <strong><code>@Bean(initMethod = &quot;initMethod&quot;)</code></strong> 中指定的<strong>初始化方法</strong>。<br><img src="/../../assets/png/Spring/bean_init.png" alt="bean_init"></p>
+<p>在 <strong><code>applyBeanPostProcessorsAfterInitialization</code></strong> 方法中完成了<strong>第八次</strong>后置处理器的调用，通过调用实现了 <strong><code>BeanPostProcessor</code></strong> 接口 <strong><code>postProcessAfterInitialization</code></strong> 方法的后置处理器，调用 <strong><code>AbstractAutoProxyCreator</code></strong> 、 <strong><code>AbstractAdvisingBeanPostProcessor</code></strong> 、 <strong><code>AdvisorAdapterRegistrationManager</code></strong> 等后置处理器的调用来对初始化完成后的Bean进行 <strong><code>AOP</code>代理的创建</strong>，调用 <strong><code>ApplicationListenerDetector</code></strong> 调用来对 <strong><code>ApplicationListener</code></strong> 的添加。</p>
+<p>最终<strong>Bean销毁时</strong>会调用<strong>第九次</strong>Bean的后置处理器，即调用 <strong><code>InitDestroyAnnotationBeanPostProcessor</code></strong> 后置处理器的 <strong><code>postProcessBeforeDestruction</code></strong> 方法。<br><img src="/../../assets/png/Spring/Bean%E7%9A%84%E5%90%8E%E7%BD%AE%E5%A4%84%E7%90%86%E5%99%A8%E8%B0%83%E7%94%A8.png" alt="Bean的后置处理器调用"></p>
+<h2 id="循环依赖"><a href="#循环依赖" class="headerlink" title="循环依赖"></a>循环依赖</h2><p>所谓的循环依赖是指，<strong>A依赖B，B又依赖A</strong>，它们之间形成了循环依赖。或者<strong>A依赖B，B依赖C，C又依赖A</strong>：<br><img src="/../../assets/png/Spring/%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96.png" alt="循环依赖"></p>
+<p>Spring中Bean创建过程中，需要对Bean的属性进行赋值，当发现其<strong>属性B</strong>是一个Bean时，会先通过 <strong><code>getBean(B)</code></strong> 去获取依赖的Bean，若B未被穿件会先创建，最终将生成好的依赖的Bean赋值给当前属性。若在通过getBean(B)创建依赖Bean时，给依赖的Bean的<strong>属性A</strong>赋值时，发现其属性是前一个Bean，这是又通过<strong>getBean(A)<strong>去获取Bean，但这时A并没有创建完成，这时就会产生死循环。Spring中是通过</strong>三级缓存</strong>来解决<strong>单例Bean</strong>的循环依赖问题的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements SingletonBeanRegistry &#123;</span><br><span class="line">   // 一级缓存，也是单例缓存池 用于保存所有的单实例bean</span><br><span class="line">   private final Map&lt;String, Object&gt; singletonObjects = new ConcurrentHashMap&lt;&gt;(256);</span><br><span class="line">   // 二级缓存，缓存的key为beanName，value为早期对象，即还没进行属性赋值的对象</span><br><span class="line">   private final Map&lt;String, Object&gt; earlySingletonObjects = new HashMap&lt;&gt;(16);</span><br><span class="line">   // 三级缓存，缓存key为beanName，value为函数式接口ObjectFactory</span><br><span class="line">   private final Map&lt;String, ObjectFactory&lt;?&gt;&gt; singletonFactories = new HashMap&lt;&gt;(16);</span><br><span class="line">   // 已注册的单例名称set</span><br><span class="line">   private final Set&lt;String&gt; registeredSingletons = new LinkedHashSet&lt;&gt;(256);</span><br><span class="line">   // 该集合用户缓存当前正在创建bean的名称</span><br><span class="line">   private final Set&lt;String&gt; singletonsCurrentlyInCreation = Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;(16));</span><br><span class="line">   // 排除当前创建检查的</span><br><span class="line">   private final Set&lt;String&gt; inCreationCheckExclusions = Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;(16));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>一级缓存<code>singletonObjects</code></strong> 保存所有<strong>生成完全</strong>的单实例Bean，<strong>二级缓存<code>earlySingletonObjects</code></strong> 保存<strong>还没进行属性赋值</strong>的Bean的早期对象，<strong>三级缓存<code>singletonFactories</code></strong> 中保存是<strong>封装了早期对象的函数式接口</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addSingletonFactory(beanName, () -&gt; getEarlyBeanReference(beanName, mbd, bean));</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">protected Object getEarlyBeanReference(String beanName, RootBeanDefinition mbd, Object bean) &#123;</span><br><span class="line">   Object exposedObject = bean;</span><br><span class="line">   if (!mbd.isSynthetic() &amp;&amp; hasInstantiationAwareBeanPostProcessors()) &#123;</span><br><span class="line">      for (BeanPostProcessor bp : getBeanPostProcessors()) &#123;</span><br><span class="line">         if (bp instanceof SmartInstantiationAwareBeanPostProcessor) &#123;</span><br><span class="line">            SmartInstantiationAwareBeanPostProcessor ibp = (SmartInstantiationAwareBeanPostProcessor) bp;</span><br><span class="line">            exposedObject = ibp.getEarlyBeanReference(exposedObject, beanName);</span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   return exposedObject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当Bean实例化完成即早期对象生成完成后，会将<strong>早期对象</strong>通过<strong>函数式接口<code>getEarlyBeanReference</code></strong> 存入<strong>第三级缓存<code>singletonFactories</code></strong> 中，主要就是为了解决<strong>循环依赖</strong>，若<strong>不存在循环依赖，该函数接口不会被调用</strong>，故三级缓存<strong>不会被升级为二级缓存</strong>。若存在循环引用就会在<strong>getBean(A)<strong>时调用 <strong><code>getSingleton</code></strong> 方法，从而将三级缓存中的函数式接口 <strong><code>getEarlyBeanReference</code></strong> 执行，给</strong>有AOP代理</strong>的且<strong>产生循环依赖</strong>的对象<strong>创建AOP代理</strong>，并将<strong>代理后的对象放入二级缓存</strong>中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">protected Object getSingleton(String beanName, boolean allowEarlyReference) &#123;</span><br><span class="line">   Object singletonObject = this.singletonObjects.get(beanName);</span><br><span class="line">   if (singletonObject == null &amp;&amp; isSingletonCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">      synchronized (this.singletonObjects) &#123;</span><br><span class="line">         singletonObject = this.earlySingletonObjects.get(beanName);</span><br><span class="line">         if (singletonObject == null &amp;&amp; allowEarlyReference) &#123;</span><br><span class="line">            ObjectFactory&lt;?&gt; singletonFactory = this.singletonFactories.get(beanName);</span><br><span class="line">            if (singletonFactory != null) &#123;</span><br><span class="line">               singletonObject = singletonFactory.getObject();</span><br><span class="line">               this.earlySingletonObjects.put(beanName, singletonObject);</span><br><span class="line">               this.singletonFactories.remove(beanName);</span><br><span class="line">            &#125;</span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   return singletonObject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>B的属性赋值中就能通过getBean(A)拿到A了，然后B就能完成赋值从而完成Bean的生成，最终A的属性赋值getBean(B)就能获取到B从而A完成属性赋值。</p>
+<p>从源码来看其实<strong>二级缓存完全可以解决循环依赖</strong>的问题，若不使用第三级缓存，那 <strong><code>getEarlyBeanReference</code></strong> 方法要么<strong>在Bean实例化后</strong>就立即调用，要么将 <strong><code>getEarlyBeanReference</code></strong> 放入 <strong><code>getSingleton</code></strong> 中调用，前者会导致不论是否有循环依赖的Bean创建都会被调用，从而<strong>导致大量重复的调用</strong>，后者导致 <strong><code>getSingleton</code></strong> 方法<strong>职责不单一</strong>，故用到第三级缓存可能主要是为了<strong>解耦</strong>、<strong>方法职责单一</strong>、<strong>提高阅读性便于维护</strong>。<br><img src="/../../assets/png/Spring/%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96Bean%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B.png" alt="循环依赖Bean创建过程"></p>
+<p>对于<strong>循环依赖中先被加载的类</strong>A才会用到二级缓存 <strong><code>earlySingletonObjects</code></strong> ，<strong>后被加载</strong>的类B其实跟普通Bean加载过程一样，不会调用三级缓存中的函数式接口 <strong><code>getEarlyBeanReference</code></strong> 。若A存在AOP代理，则B中赋值的A是经过AOP代理过后的对象，但给A属性<strong>赋值的时候依旧是赋值给未被代理</strong>的A，但是A和代理对象的中的A是同一个，故代理对象中的A属性被赋值了。<strong>若不存在<code>AOP</code>代理，这里的<code>bean</code>、<code>earlySingletonReference</code>、<code>exposedObject</code>其实是同一个对象，若存在AOP代理<code>earlySingletonReference</code>与<code>bean</code>、<code>exposedObject</code>不是同一个对象</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">if (earlySingletonExposure) &#123;</span><br><span class="line">   Object earlySingletonReference = getSingleton(beanName, false); // 若存在AOP代理，则返回被代理后的对象</span><br><span class="line">   if (earlySingletonReference != null) &#123;</span><br><span class="line">      if (exposedObject == bean) &#123;</span><br><span class="line">         exposedObject = earlySingletonReference; // 将代理后的对象返回</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>只有单实例Bean才会放入三级缓存，对于原型模式创建的对象不会放入三级缓存中，而Spring又是通过三级缓存来解决循环依赖的，故<strong>原型Bean的循环依赖无法利用缓存，则无法解决循环依赖的问题</strong>。</p>
+<p>对于<strong>构造方法注入的Bean的循环依赖</strong>问题，源码中可以很明看到Bean是先通过构造方法实例化后，才会将其放入三级缓存中，故构造方法注入Bean无法利用三级缓存，故也<strong>无法解决循环依赖</strong>问题。</p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/Spring/Bean%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Bean的加载过程
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/Spring/BeanDefinition%E8%A7%A3%E6%9E%90%E6%B3%A8%E5%86%8C/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">BeanDefinition解析注册</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

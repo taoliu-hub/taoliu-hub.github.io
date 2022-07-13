@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>事件监听器 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="Spring">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="Spring事件体系包括事件，事件监听器，事件广播器三个组件，实现原理其实就是观察者模式。Spring内置事件由系统内部进行发布，只需要注入监听器即可：  ContextRefreshedEvent ：当容器被实例化即所有Bean都已被加载后置处理器都被激活，所有单例bean都已被实例化，所有容器对象都已准备好可使用，如调用refresh()方法。若容器支持热重载，则refresh可以被触发多次，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="事件监听器">
+<meta property="og:url" content="http://example.com/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="Spring事件体系包括事件，事件监听器，事件广播器三个组件，实现原理其实就是观察者模式。Spring内置事件由系统内部进行发布，只需要注入监听器即可：  ContextRefreshedEvent ：当容器被实例化即所有Bean都已被加载后置处理器都被激活，所有单例bean都已被实例化，所有容器对象都已准备好可使用，如调用refresh()方法。若容器支持热重载，则refresh可以被触发多次，">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/Spring/Spring%E5%86%85%E7%BD%AE%E4%BA%8B%E4%BB%B6.png">
+<meta property="og:image" content="http://example.com/assets/png/Spring/%E4%BA%8B%E4%BB%B6%E6%9C%BA%E5%88%B6.png">
+<meta property="og:image" content="http://example.com/assets/png/Spring/%E7%9B%91%E5%90%AC%E5%99%A8%E6%80%BB%E8%A7%88.png">
+<meta property="article:published_time" content="2020-10-21T11:52:21.000Z">
+<meta property="article:modified_time" content="2022-07-13T10:21:41.749Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="Spring">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/Spring/Spring%E5%86%85%E7%BD%AE%E4%BA%8B%E4%BB%B6.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Spring
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringBoot
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%20Jar%E5%8C%85%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot Jar包启动原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD/">SpringBoot资源加载</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D%E5%8E%9F%E7%90%86/">SpringBoot自动装配原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot启动原理</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Spring/Spring%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/">Spring整体架构</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%87%E9%9D%A2%E7%B1%BB%E8%A7%A3%E6%9E%90/">AOP切面类解析</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B0%83%E7%94%A8/">AOP创建代理与调用</a></li>  <li class="file"><a href="/blog/Spring/BeanDefinition%E8%A7%A3%E6%9E%90%E6%B3%A8%E5%86%8C/">BeanDefinition解析注册</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">Bean的生命周期</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">Bean的加载过程</a></li>  <li class="file"><a href="/blog/Spring/Hystrix%E6%80%BB%E7%BB%93/">Hystrix总结</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8/">IoC容器</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">IoC容器加载过程</a></li>  <li class="file"><a href="/blog/Spring/Spring%20Gzip%E5%8E%8B%E7%BC%A9/">Spring Gzip压缩</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">SpringMvc加载机制</a></li>  <li class="file"><a href="/blog/Spring/Spring%E5%88%9D%E5%A7%8B%E5%8C%96%E6%89%A9%E5%B1%95/">Spring初始化扩展</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%A4%84%E7%90%86%E5%88%86%E5%8F%91%E8%AF%B7%E6%B1%82%E5%8E%9F%E7%90%86/">SpringMvc处理分发请求原理</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%BC%82%E6%AD%A5%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/">SpringMvc异步原理及实现</a></li>  <li class="file"><a href="/blog/Spring/Spring%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B7%A8%E7%BA%BF%E7%A8%8B%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB/">Spring线程池跨线程数据共享</a></li>  <li class="file active"><a href="/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/">事件监听器</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%A7%A3%E6%9E%90%E5%8E%9F%E7%90%86/">事务解析原理</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%B0%83%E7%94%A8%E5%8E%9F%E7%90%86/">事务调用原理</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Test
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Test/IT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">IT测试总结</a></li>  <li class="file"><a href="/blog/Test/UT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">UT测试总结</a></li>  <li class="file"><a href="/blog/Test/JMeter%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">JMeter日常总结</a></li>  <li class="file"><a href="/blog/Test/LoadRunner%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">LoadRunner日常总结</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Spring/事件监听器" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Spring/">Spring</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/Spring/" rel="tag">Spring</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/">
+            <time datetime="2020-10-21T11:52:21.000Z" itemprop="datePublished">2020-10-21</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            事件监听器
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <p>Spring事件体系包括<strong>事件</strong>，<strong>事件监听器</strong>，<strong>事件广播器</strong>三个组件，实现原理其实就是<strong>观察者模式</strong>。Spring内置事件由系统内部进行发布，只需要注入监听器即可：<br><img src="/../../assets/png/Spring/Spring%E5%86%85%E7%BD%AE%E4%BA%8B%E4%BB%B6.png" alt="Spring内置事件"></p>
+<ul>
+<li><strong><code>ContextRefreshedEvent</code></strong> ：当<strong>容器被实例化</strong>即<strong>所有Bean都已被加载后置处理器都被激活</strong>，所有单例bean都已被实例化，所有容器对象都已准备好可使用，如调用refresh()方法。若容器支持热重载，则refresh可以被触发多次， <strong><code>XmlWebApplicatonContext</code></strong> 支持热刷新， <strong><code>GenericApplicationContext</code></strong> 不支持。</li>
+<li><strong><code>ContextStartedEvent</code></strong> ：当<strong>容器启动时发布</strong>，即调用 <strong><code>start()</code></strong> 方法，即所有Lifecycle Bean都已显式接收到了start信号</li>
+<li><strong><code>ContextStoppedEvent</code></strong> ：当<strong>容器停止时发布</strong>，即调用 <strong><code>stop()</code></strong> 方法，即所有Lifecycle Bean都已显式接收到了stop信号，关闭的容器可通过start()方法重启</li>
+<li><strong><code>ContextClosedEvent</code></strong> ：当<strong>容器关闭时发布</strong>，即调用 <strong><code>close()</code></strong> 方法，即所有单例Bean都已被销毁。关闭的容器不能被重启或refresh</li>
+<li><strong><code>RequestHandledEvent</code></strong> ：只在<strong>使用Spring  <code>DispatcherServlet</code>时有效</strong>，当一个<strong>请求被处理完成时发布</strong></li>
+</ul>
+<p>Spring事件机制是<strong>观察者模式</strong>的一种实现，除了<strong>发布者</strong>和<strong>监听者</strong>者两个角色之外，还有一个 <strong><code>EventMultiCaster</code></strong> 的角色负责<strong>把事件转发给监听者</strong>，发布者调用context.publishEvent(msg)，会将事件发送给了EventMultiCaster， 而EventMultiCaster注册着所有的Listener，然后根据事件类型决定转发给那个Listener。<br><img src="/../../assets/png/Spring/%E4%BA%8B%E4%BB%B6%E6%9C%BA%E5%88%B6.png" alt="事件机制"></p>
+<h3 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h3><p><img src="/../../assets/png/Spring/%E7%9B%91%E5%90%AC%E5%99%A8%E6%80%BB%E8%A7%88.png" alt="监听器总览"></p>
+<p>在 <strong><code>refresh()</code></strong> 中的 <strong><code>prepareRefresh()</code></strong> 方法中创建了一个<strong>早期事件监听器对象<code>earlyApplicationListeners</code></strong> ，以及<strong>用于保存早期待发布的事件集合<code>earlyApplicationEvents</code></strong> ，<strong>事件监听器还没有注册到多播器上的时候都称为早期事件</strong>。早期事件<strong>不需要手动publishEvent发布</strong>，在 <strong><code>registerListeners</code></strong> 中会<strong>自动发布</strong>，发布完早期事件后会将早期事件<strong>置空</strong>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">AbstractApplicationContext</span> <span class="keyword">extends</span> <span class="title class_">DefaultResourceLoader</span> <span class="keyword">implements</span> <span class="title class_">ConfigurableApplicationContext</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> Set&lt;ApplicationEvent&gt; earlyApplicationEvents;</span><br><span class="line">    <span class="keyword">private</span> ApplicationEventMulticaster applicationEventMulticaster;</span><br><span class="line">    <span class="keyword">private</span> Set&lt;ApplicationListener&lt;?&gt;&gt; earlyApplicationListeners;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">prepareRefresh</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">this</span>.earlyApplicationListeners == <span class="literal">null</span>) &#123; <span class="comment">// 创建一个早期事件监听器对象</span></span><br><span class="line">            <span class="built_in">this</span>.earlyApplicationListeners = <span class="keyword">new</span> <span class="title class_">LinkedHashSet</span>&lt;&gt;(<span class="built_in">this</span>.applicationListeners);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">this</span>.applicationListeners.clear();</span><br><span class="line">            <span class="built_in">this</span>.applicationListeners.addAll(<span class="built_in">this</span>.earlyApplicationListeners);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">this</span>.earlyApplicationEvents = <span class="keyword">new</span> <span class="title class_">LinkedHashSet</span>&lt;&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="事件广播器初始化"><a href="#事件广播器初始化" class="headerlink" title="事件广播器初始化"></a>事件广播器初始化</h3><p> <strong><code>applicationEventMulticaster</code></strong> 提供了<strong>容器监听器的注册表</strong>， <strong><code>refresh()</code></strong> 中的 <strong><code>initApplicationEventMulticaster()</code></strong> 中会<strong>对事件广播器进行初始化</strong>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">initApplicationEventMulticaster</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ConfigurableListableBeanFactory</span> <span class="variable">beanFactory</span> <span class="operator">=</span> getBeanFactory(); <span class="comment">// 获取Bean工厂对象</span></span><br><span class="line">    <span class="comment">// 判断容器中是否有applicationEventMulticaster应用多播器组件</span></span><br><span class="line">    <span class="keyword">if</span> (beanFactory.containsLocalBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)) &#123;</span><br><span class="line">        <span class="comment">// 直接显示的调用getBean获取ApplicationEventMulticaster赋值给applicationContext对象</span></span><br><span class="line">        <span class="built_in">this</span>.applicationEventMulticaster = beanFactory.getBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, ApplicationEventMulticaster.class);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; <span class="comment">// 若容器中没有</span></span><br><span class="line">        <span class="comment">// spring ioc显式的new一个SimpleApplicationEventMulticaster对象保存在applicatoinContext对象中</span></span><br><span class="line">        <span class="built_in">this</span>.applicationEventMulticaster = <span class="keyword">new</span> <span class="title class_">SimpleApplicationEventMulticaster</span>(beanFactory);</span><br><span class="line">        <span class="comment">// 并且注入到容器中</span></span><br><span class="line">        beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, <span class="built_in">this</span>.applicationEventMulticaster);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用户可通过<strong>实现<code>ApplicationEventMulticaster</code>接口</strong>自定义事件广播器，Spring会将其<strong>注册成容器的事件广播器</strong>，若没有找到配置的外部事件广播器，<strong>默认</strong>使用 <strong><code>SimpleApplicationEventMulticaster</code></strong> 作为事件广播器。</p>
+<h3 id="注册事件监听器"><a href="#注册事件监听器" class="headerlink" title="注册事件监听器"></a>注册事件监听器</h3><p>refresh()的 <strong><code>registerListeners()</code></strong> 中会<strong>获取容器中所有的监听器对象</strong>，把监听器<strong>挨个的注册到多播器</strong>上去，这个时候正常流程是不会有监听器的，在initApplicationEventMulticaster之后，在registerListeners之前，只有一个可能<strong>在<code>onRefresh()</code>里面注册了监听器</strong>。这里会执行所有的早期发布事件。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">registerListeners</span><span class="params">()</span> &#123;</span><br><span class="line">   <span class="comment">// 获取容器中所有的监听器对象，把监听器挨个的注册到多播器上去，这个时候正常流程是不会有监听器的</span></span><br><span class="line">   <span class="comment">// 监听器不会在这之前注册，在initApplicationEventMulticaster后在registerListeners之前，只有一个可能在：在onRefresh里面注册了监听器</span></span><br><span class="line">   <span class="keyword">for</span> (ApplicationListener&lt;?&gt; listener : getApplicationListeners()) &#123;</span><br><span class="line">      getApplicationEventMulticaster().addApplicationListener(listener);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 获取Bean定义中的监听器对象</span></span><br><span class="line">   String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, <span class="literal">true</span>, <span class="literal">false</span>);</span><br><span class="line">   <span class="keyword">for</span> (String listenerBeanName : listenerBeanNames) &#123; <span class="comment">// 把监听器的名称注册到多播器上</span></span><br><span class="line">      getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 获取早期事件</span></span><br><span class="line">   Set&lt;ApplicationEvent&gt; earlyEventsToProcess = <span class="built_in">this</span>.earlyApplicationEvents;</span><br><span class="line">   <span class="built_in">this</span>.earlyApplicationEvents = <span class="literal">null</span>; <span class="comment">// 在这里赋null，也就是自此之后都将没有早期事件了</span></span><br><span class="line">   <span class="keyword">if</span> (earlyEventsToProcess != <span class="literal">null</span>) &#123;<span class="comment">// 通过多播器进行播发早期事件</span></span><br><span class="line">      <span class="keyword">for</span> (ApplicationEvent earlyEvent : earlyEventsToProcess) &#123;</span><br><span class="line">         getApplicationEventMulticaster().multicastEvent(earlyEvent);</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里<strong>只是把监听器的名称注册到多播器上</strong>，为了<strong>防止懒加载的监听器漏掉</strong>，因为懒加载的Bean是不会在容器初始化时加载的，只会在使用时才会去加载，且这里<strong>只处理</strong>实现了 <strong><code>ApplicationListener</code></strong> 接口的监听器。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">class</span> <span class="title class_">ListenerRetriever</span> &#123;</span><br><span class="line">   <span class="comment">// 存储了所有的Listener，包括实现了ApplicationListener接口和使用了@EventListener的Bean</span></span><br><span class="line">   <span class="keyword">public</span> <span class="keyword">final</span> Set&lt;ApplicationListener&lt;?&gt;&gt; applicationListeners = <span class="keyword">new</span> <span class="title class_">LinkedHashSet</span>&lt;&gt;();</span><br><span class="line">   <span class="comment">// 只存储实现了ApplicationListener接口的Bean名称</span></span><br><span class="line">   <span class="keyword">public</span> <span class="keyword">final</span> Set&lt;String&gt; applicationListenerBeans = <span class="keyword">new</span> <span class="title class_">LinkedHashSet</span>&lt;&gt;();</span><br><span class="line">   <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">boolean</span> preFiltered;</span><br><span class="line">   <span class="keyword">public</span> <span class="title function_">ListenerRetriever</span><span class="params">(<span class="type">boolean</span> preFiltered)</span> &#123;</span><br><span class="line">      <span class="built_in">this</span>.preFiltered = preFiltered;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">public</span> Collection&lt;ApplicationListener&lt;?&gt;&gt; getApplicationListeners() &#123;</span><br><span class="line">      List&lt;ApplicationListener&lt;?&gt;&gt; allListeners = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(<span class="built_in">this</span>.applicationListeners.size() + <span class="built_in">this</span>.applicationListenerBeans.size());</span><br><span class="line">      allListeners.addAll(<span class="built_in">this</span>.applicationListeners);</span><br><span class="line">      <span class="keyword">if</span> (!<span class="built_in">this</span>.applicationListenerBeans.isEmpty()) &#123;</span><br><span class="line">         <span class="type">BeanFactory</span> <span class="variable">beanFactory</span> <span class="operator">=</span> getBeanFactory();</span><br><span class="line">         <span class="keyword">for</span> (String listenerBeanName : <span class="built_in">this</span>.applicationListenerBeans) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">               ApplicationListener&lt;?&gt; listener = beanFactory.getBean(listenerBeanName, ApplicationListener.class);</span><br><span class="line">               <span class="keyword">if</span> (<span class="built_in">this</span>.preFiltered || !allListeners.contains(listener)) &#123;</span><br><span class="line">                  allListeners.add(listener);</span><br><span class="line">               &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (NoSuchBeanDefinitionException ex) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (!<span class="built_in">this</span>.preFiltered || !<span class="built_in">this</span>.applicationListenerBeans.isEmpty()) &#123;</span><br><span class="line">         AnnotationAwareOrderComparator.sort(allListeners);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> allListeners;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="发布事件"><a href="#发布事件" class="headerlink" title="发布事件"></a>发布事件</h3><p>Spring委托 <strong><code>ApplicationEventMulticaster</code></strong> 将事件通知给所有的事件监听器，这里会发布 <strong><code>ContextRefreshedEvent</code></strong> 事件，可实现一个 <strong><code>ContextRefreshedEvent</code></strong> 事件的<strong>监听器</strong>做一些扩展。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">finishRefresh</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">// 清除上下文级别的资源缓存，如来自扫描的ASM元数据</span></span><br><span class="line">    clearResourceCaches();</span><br><span class="line">    <span class="comment">// 注册lifecycleProcessor声明周期处理器，作用：当ApplicationContext启动或停止时，它会通过LifecycleProcessor来与所有声明的bean的周期做状态更新</span></span><br><span class="line">    initLifecycleProcessor();</span><br><span class="line">    <span class="comment">// 为实现了SmartLifecycle并且isAutoStartup 自动启动的Lifecycle调用start()方法</span></span><br><span class="line">    getLifecycleProcessor().onRefresh();</span><br><span class="line">    <span class="comment">// 发布容器启动完毕事件</span></span><br><span class="line">    publishEvent(<span class="keyword">new</span> <span class="title class_">ContextRefreshedEvent</span>(<span class="built_in">this</span>));</span><br><span class="line">    <span class="comment">//  注册当前spring容器到LiveBeansView，提供servlet(LiveBeansViewServlet)在线查看所有的bean json 、 为了支持Spring Tool Suite的智能提示</span></span><br><span class="line">    LiveBeansView.registerApplicationContext(<span class="built_in">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">AbstractApplicationContext</span> <span class="keyword">extends</span> <span class="title class_">DefaultResourceLoader</span> <span class="keyword">implements</span> <span class="title class_">ConfigurableApplicationContext</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">publishEvent</span><span class="params">(ApplicationEvent event)</span> &#123;</span><br><span class="line">        publishEvent(event, <span class="literal">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">publishEvent</span><span class="params">(Object event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> &#123;</span><br><span class="line">        Assert.notNull(event, <span class="string">&quot;Event must not be null&quot;</span>);</span><br><span class="line">        ApplicationEvent applicationEvent;</span><br><span class="line">        <span class="keyword">if</span> (event <span class="keyword">instanceof</span> ApplicationEvent) &#123;</span><br><span class="line">            applicationEvent = (ApplicationEvent) event;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            applicationEvent = <span class="keyword">new</span> <span class="title class_">PayloadApplicationEvent</span>&lt;&gt;(<span class="built_in">this</span>, event);</span><br><span class="line">            <span class="keyword">if</span> (eventType == <span class="literal">null</span>) &#123;</span><br><span class="line">                eventType = ((PayloadApplicationEvent&lt;?&gt;) applicationEvent).getResolvableType();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 这里是唯一添加早期事件的地方，所以一定要发布事件才能添加早期事件</span></span><br><span class="line">        <span class="comment">// 只有当执行力refresh--&gt;registerListeners才会将earlyApplicationEvents赋为null，故registerListeners之前发布的事件都是早期事件</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">this</span>.earlyApplicationEvents != <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="built_in">this</span>.earlyApplicationEvents.add(applicationEvent);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            getApplicationEventMulticaster().multicastEvent(applicationEvent, eventType);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">this</span>.parent != <span class="literal">null</span>) &#123; <span class="comment">// 若是父容器，也会向父容器里广播一份</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">this</span>.parent <span class="keyword">instanceof</span> AbstractApplicationContext) &#123;</span><br><span class="line">                ((AbstractApplicationContext) <span class="built_in">this</span>.parent).publishEvent(event, eventType);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="built_in">this</span>.parent.publishEvent(event);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Spring默认的事件广播器为 <strong><code>SimpleApplicationEventMulticaster</code></strong> ，这里其实就是挨个去调用事件监听器的 <strong><code>onApplicationEvent</code></strong> 方法。默认getTaskExecutor()获取的线程池为null，故<strong>默认是同步执行</strong>， <strong><code>applicationContext.publishEvent()</code></strong> 方法需要<strong>同步等待各个监听器处理完</strong>之后才返回。若想异步可实现 <strong><code>ApplicationEventMulticaster</code></strong> 接口，并将其<strong>注册<code>beanName</code>为<code>applicationEventMulticaster</code></strong> 的Bean。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SimpleApplicationEventMulticaster</span> <span class="keyword">extends</span> <span class="title class_">AbstractApplicationEventMulticaster</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">multicastEvent</span><span class="params">(<span class="keyword">final</span> ApplicationEvent event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> &#123;</span><br><span class="line">        <span class="type">ResolvableType</span> <span class="variable">type</span> <span class="operator">=</span> (eventType != <span class="literal">null</span> ? eventType : resolveDefaultEventType(event));</span><br><span class="line">        <span class="comment">// 从多播器中获取出所有的监听器</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">final</span> ApplicationListener&lt;?&gt; listener : getApplicationListeners(event, type)) &#123;</span><br><span class="line">            <span class="type">Executor</span> <span class="variable">executor</span> <span class="operator">=</span> getTaskExecutor(); <span class="comment">// 判断多播器中是否支持异步多播的</span></span><br><span class="line">            <span class="keyword">if</span> (executor != <span class="literal">null</span>) &#123; <span class="comment">// 异步播发事件</span></span><br><span class="line">                executor.execute(() -&gt; invokeListener(listener, event));</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123; <span class="comment">// 同步播发</span></span><br><span class="line">                invokeListener(listener, event);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">invokeListener</span><span class="params">(ApplicationListener&lt;?&gt; listener, ApplicationEvent event)</span> &#123;</span><br><span class="line">        <span class="type">ErrorHandler</span> <span class="variable">errorHandler</span> <span class="operator">=</span> getErrorHandler();</span><br><span class="line">        <span class="keyword">if</span> (errorHandler != <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                doInvokeListener(listener, event);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable err) &#123;</span><br><span class="line">                errorHandler.handleError(err);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            doInvokeListener(listener, event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">doInvokeListener</span><span class="params">(ApplicationListener listener, ApplicationEvent event)</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            listener.onApplicationEvent(event);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (ClassCastException ex) &#123;</span><br><span class="line">            <span class="keyword">throw</span> ex;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>遍历注册的每个监听器</strong>，并启动来调用每个监听器的 <strong><code>onApplicationEvent</code></strong> 方法。由于 <strong><code>SimpleApplicationEventMulticaster</code></strong> 的 <strong><code>taskExecutor</code></strong> 的实现类是 <strong><code>SyncTaskExecutor</code></strong> ，因此事件监听器对事件的处理是<strong>同步进行</strong>的。</p>
+<h3 id="自定义监听器注册"><a href="#自定义监听器注册" class="headerlink" title="自定义监听器注册"></a>自定义监听器注册</h3><p>对于<strong>用户自定义的监听器的解析</strong>是通过 <strong><code>ApplicationListenerDetector</code></strong> 后置处理器来实现的，该Bean后置处理器是在refresh()的 <strong><code>registerBeanPostProcessors(beanFactory)</code></strong> 中注册的，在第八次Bean的后置处理器的调用的地方调用。用于<strong>解析实现了<code>ApplicationListener</code>接口的方式的监听器</strong>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ApplicationListenerDetector</span> <span class="keyword">implements</span> <span class="title class_">DestructionAwareBeanPostProcessor</span>, MergedBeanDefinitionPostProcessor &#123;</span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">postProcessAfterInitialization</span><span class="params">(Object bean, String beanName)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ApplicationListener) &#123;</span><br><span class="line">            <span class="type">Boolean</span> <span class="variable">flag</span> <span class="operator">=</span> <span class="built_in">this</span>.singletonNames.get(beanName);</span><br><span class="line">            <span class="keyword">if</span> (Boolean.TRUE.equals(flag)) &#123;</span><br><span class="line">                <span class="built_in">this</span>.applicationContext.addApplicationListener((ApplicationListener&lt;?&gt;) bean);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (Boolean.FALSE.equals(flag)) &#123;</span><br><span class="line">                <span class="built_in">this</span>.singletonNames.remove(beanName);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> bean;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于注解方式的自定义监听器的解析与执行是通过在IoC容器启动最开始时在 <strong><code>AnnotatedBeanDefinitionReader</code></strong> 中注册了一系列创世纪的类时，注册了 <strong><code>DefaultEventListenerFactory</code></strong> 事件<strong>监听器工厂</strong>和处理监听方法的注解 <strong><code>@EventListener</code></strong> 解析器 <strong><code>EventListenerMethodProcessor</code></strong> 。解析是在refresh()的finishBeanFactoryInitialization(beanFactory)的beanFactory.preInstantiateSingletons()中，且是在所有单例Bean都已实例化完成加载到单例池中之后：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">preInstantiateSingletons</span><span class="params">()</span> <span class="keyword">throws</span> BeansException &#123;</span><br><span class="line">    <span class="comment">// 获取容器中所有bean定义的名称</span></span><br><span class="line">    List&lt;String&gt; beanNames = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(<span class="built_in">this</span>.beanDefinitionNames);</span><br><span class="line">    <span class="comment">// 所有的单实例的bean已经记载到单实例bean到缓存中</span></span><br><span class="line">    <span class="keyword">for</span> (String beanName : beanNames) &#123;</span><br><span class="line">        <span class="comment">// 从单例缓存池中获取所有的对象</span></span><br><span class="line">        <span class="type">Object</span> <span class="variable">singletonInstance</span> <span class="operator">=</span> getSingleton(beanName);</span><br><span class="line">        <span class="comment">// 判断当前的bean是否实现了SmartInitializingSingleton接口</span></span><br><span class="line">        <span class="keyword">if</span> (singletonInstance <span class="keyword">instanceof</span> SmartInitializingSingleton) &#123;</span><br><span class="line">            <span class="keyword">final</span> <span class="type">SmartInitializingSingleton</span> <span class="variable">smartSingleton</span> <span class="operator">=</span> (SmartInitializingSingleton) singletonInstance;</span><br><span class="line">            <span class="keyword">if</span> (System.getSecurityManager() != <span class="literal">null</span>) &#123;</span><br><span class="line">                AccessController.doPrivileged((PrivilegedAction&lt;Object&gt;) () -&gt; &#123;</span><br><span class="line">                    smartSingleton.afterSingletonsInstantiated();</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">                &#125;, getAccessControlContext());</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// 触发实例化之后的方法afterSingletonsInstantiated</span></span><br><span class="line">                smartSingleton.afterSingletonsInstantiated();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line">public class EventListenerMethodProcessor implements SmartInitializingSingleton, ApplicationContextAware &#123;</span><br><span class="line">    protected final Log logger = LogFactory.getLog(getClass());</span><br><span class="line">    private final EventExpressionEvaluator evaluator = new EventExpressionEvaluator();</span><br><span class="line">    // 没有@EventListener的类</span><br><span class="line">    private final Set&lt;Class&lt;?&gt;&gt; nonAnnotatedClasses = Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;(64));</span><br><span class="line">    @Nullable</span><br><span class="line">    private ConfigurableApplicationContext applicationContext;</span><br><span class="line">    private ConfigurableApplicationContext getApplicationContext() &#123;</span><br><span class="line">        Assert.state(this.applicationContext != null, &quot;No ApplicationContext set&quot;);</span><br><span class="line">        return this.applicationContext;</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public void setApplicationContext(ApplicationContext applicationContext) &#123;</span><br><span class="line">        Assert.isTrue(applicationContext instanceof ConfigurableApplicationContext, &quot;ApplicationContext does not implement ConfigurableApplicationContext&quot;);</span><br><span class="line">        this.applicationContext = (ConfigurableApplicationContext) applicationContext;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void afterSingletonsInstantiated() &#123;</span><br><span class="line">        // 从BeanFactory中获取EventListenerFactory的bean默认情况下的两个实现,DefaultEventListenerFactory：spring自己注入的，TransactionalEventListenerFactory：使用配置进去的</span><br><span class="line">        List&lt;EventListenerFactory&gt; factories = getEventListenerFactories();</span><br><span class="line">        ConfigurableApplicationContext context = getApplicationContext();</span><br><span class="line">        String[] beanNames = context.getBeanNamesForType(Object.class);</span><br><span class="line">        for (String beanName : beanNames) &#123; // 处理所有bean查找当前bean标注了@EventListener的方法</span><br><span class="line">            if (!ScopedProxyUtils.isScopedTarget(beanName)) &#123;</span><br><span class="line">                Class&lt;?&gt; type = null;</span><br><span class="line">                try &#123;</span><br><span class="line">                    type = AutoProxyUtils.determineTargetClass(context.getBeanFactory(), beanName);</span><br><span class="line">                &#125; catch (Throwable ex) &#123;</span><br><span class="line">                &#125;</span><br><span class="line">                if (type != null) &#123;</span><br><span class="line">                    if (ScopedObject.class.isAssignableFrom(type)) &#123;</span><br><span class="line">                        try &#123;</span><br><span class="line">                            Class&lt;?&gt; targetClass = AutoProxyUtils.determineTargetClass(context.getBeanFactory(), ScopedProxyUtils.getTargetBeanName(beanName));</span><br><span class="line">                            if (targetClass != null) &#123;</span><br><span class="line">                                type = targetClass;</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125; catch (Throwable ex) &#123;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    try &#123;</span><br><span class="line">                        processBean(factories, beanName, type);</span><br><span class="line">                    &#125; catch (Throwable ex) &#123;</span><br><span class="line">                        throw new BeanInitializationException(&quot;Failed to process @EventListener &quot; + &quot;annotation on bean with name &#x27;&quot; + beanName + &quot;&#x27;&quot;, ex);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    protected List&lt;EventListenerFactory&gt; getEventListenerFactories() &#123;</span><br><span class="line">        Map&lt;String, EventListenerFactory&gt; beans = getApplicationContext().getBeansOfType(EventListenerFactory.class);</span><br><span class="line">        List&lt;EventListenerFactory&gt; factories = new ArrayList&lt;&gt;(beans.values());</span><br><span class="line">        AnnotationAwareOrderComparator.sort(factories);</span><br><span class="line">        return factories;</span><br><span class="line">    &#125;</span><br><span class="line">    protected void processBean(final List&lt;EventListenerFactory&gt; factories, final String beanName, final Class&lt;?&gt; targetType) &#123;</span><br><span class="line">        if (!this.nonAnnotatedClasses.contains(targetType)) &#123;</span><br><span class="line">            Map&lt;Method, EventListener&gt; annotatedMethods = null;</span><br><span class="line">            try &#123; // 查找当前bean标注了@EventListener的方法</span><br><span class="line">                annotatedMethods = MethodIntrospector.selectMethods(targetType, (MethodIntrospector.MetadataLookup&lt;EventListener&gt;) method -&gt; AnnotatedElementUtils.findMergedAnnotation(method, EventListener.class));</span><br><span class="line">            &#125; catch (Throwable ex) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">            if (CollectionUtils.isEmpty(annotatedMethods)) &#123;</span><br><span class="line">                this.nonAnnotatedClasses.add(targetType);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                ConfigurableApplicationContext context = getApplicationContext();</span><br><span class="line">                for (Method method : annotatedMethods.keySet()) &#123;</span><br><span class="line">                    for (EventListenerFactory factory : factories) &#123;</span><br><span class="line">                        if (factory.supportsMethod(method)) &#123; // ①创建事件监听器</span><br><span class="line">                            Method methodToUse = AopUtils.selectInvocableMethod(method, context.getType(beanName));</span><br><span class="line">                            ApplicationListener&lt;?&gt; applicationListener = factory.createApplicationListener(beanName, targetType, methodToUse);</span><br><span class="line">                            if (applicationListener instanceof ApplicationListenerMethodAdapter) &#123;</span><br><span class="line">                                ((ApplicationListenerMethodAdapter) applicationListener).init(context, this.evaluator);</span><br><span class="line">                            &#125;</span><br><span class="line">                            context.addApplicationListener(applicationListener); // ②注册事件到Context中</span><br><span class="line">                            break;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注解方式的监听器发布事件是 <strong>统一</strong> 走的 <strong><code>ApplicationListenerMethodAdapter</code></strong> 的 <strong><code>onApplicationEvent</code></strong> 方法，然后通过 <strong>反射</strong> 来调用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ApplicationListenerMethodAdapter</span> <span class="keyword">implements</span> <span class="title class_">GenericApplicationListener</span> &#123;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onApplicationEvent</span><span class="params">(ApplicationEvent event)</span> &#123;</span><br><span class="line">		processEvent(event);</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">processEvent</span><span class="params">(ApplicationEvent event)</span> &#123;</span><br><span class="line">		Object[] args = resolveArguments(event);</span><br><span class="line">		<span class="keyword">if</span> (shouldHandle(event, args)) &#123;</span><br><span class="line">			<span class="type">Object</span> <span class="variable">result</span> <span class="operator">=</span> doInvoke(args);</span><br><span class="line">			<span class="keyword">if</span> (result != <span class="literal">null</span>) &#123;</span><br><span class="line">				handleResult(result);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">protected</span> Object <span class="title function_">doInvoke</span><span class="params">(Object... args)</span> &#123;</span><br><span class="line">		<span class="type">Object</span> <span class="variable">bean</span> <span class="operator">=</span> getTargetBean();</span><br><span class="line">		ReflectionUtils.makeAccessible(<span class="built_in">this</span>.method);</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="built_in">this</span>.method.invoke(bean, args);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="自定义事件"><a href="#自定义事件" class="headerlink" title="自定义事件"></a>自定义事件</h3><p>事件类继承<code>ApplicationEvent</code>即可</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ElevenEvent</span> <span class="keyword">extends</span> <span class="title class_">ApplicationEvent</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> String name;</span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">ElevenEvent</span><span class="params">(Object source, String name)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>(source);</span><br><span class="line">        <span class="built_in">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">getName</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>监听器可以<strong>基于接口</strong>，需实现 <strong><code>ApplicationListener</code></strong> 接口覆写onApplicationEvent方法，也可<strong>基于<code>@EventListener</code>注解</strong>的方式，<strong>同一个事件可有多个监听器</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ElevenEventListener</span> <span class="keyword">implements</span> <span class="title class_">ApplicationListener</span>&lt;ElevenEvent&gt; &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onApplicationEvent</span><span class="params">(ElevenEvent event)</span> &#123;</span><br><span class="line">        System.out.println(Thread.currentThread().getName() + <span class="string">&quot;, Interface：&quot;</span> + event.getName());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ElevenEventAnnotationListener</span> &#123;</span><br><span class="line">    <span class="meta">@EventListener(value = ElevenEvent.class)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onApplicationEvent</span><span class="params">(ElevenEvent event)</span> &#123;</span><br><span class="line">        System.out.println(Thread.currentThread().getName() + <span class="string">&quot;, Annotation：&quot;</span> + event.getName());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>事件的发布通过 <strong><code>容器</code></strong> 发布即可</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">AnnotationConfigApplicationContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AnnotationConfigApplicationContext</span>(MainConfig.class);</span><br><span class="line">context.publishEvent(<span class="keyword">new</span> <span class="title class_">ElevenEvent</span>(context, <span class="string">&quot;test&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+<p>事件监听操作  <strong><code>可异步执行</code></strong> ， 只  <strong><code>需配置异步线程池</code></strong>  即可</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean(name = &quot;applicationEventMulticaster&quot;)</span></span><br><span class="line"><span class="keyword">public</span> ApplicationEventMulticaster <span class="title function_">simpleApplicationEventMulticaster</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">SimpleApplicationEventMulticaster</span> <span class="variable">eventMulticaster</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SimpleApplicationEventMulticaster</span>();</span><br><span class="line">    eventMulticaster.setTaskExecutor(<span class="keyword">new</span> <span class="title class_">SimpleAsyncTaskExecutor</span>());</span><br><span class="line">    <span class="keyword">return</span> eventMulticaster;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%A7%A3%E6%9E%90%E5%8E%9F%E7%90%86/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    事务解析原理
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/Spring/Spring%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B7%A8%E7%BA%BF%E7%A8%8B%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">Spring线程池跨线程数据共享</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
