@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>MySQL主从架构 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="MySQL">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="实际生产中，往往数据量会极为庞大，并且数据的安全性要求也更高，生产环境中MySQL必须是要搭建一套主从复制架构，同时可基于一些工具实现高可用架构。在此基础上则可基于一些中间件实现读写分离架构。若数据量非常大，还必须可实现分库分表的架构。 通过搭建MySQL主从集群可缓解MySQL数据存储及访问压力，搭建主从集群时，双方MySQL必须版本一致，至少主服务版本低于从服务，且两节点间时间需要同步。  数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL主从架构">
+<meta property="og:url" content="http://example.com/blog/DB/mysql/MySQL%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="实际生产中，往往数据量会极为庞大，并且数据的安全性要求也更高，生产环境中MySQL必须是要搭建一套主从复制架构，同时可基于一些工具实现高可用架构。在此基础上则可基于一些中间件实现读写分离架构。若数据量非常大，还必须可实现分库分表的架构。 通过搭建MySQL主从集群可缓解MySQL数据存储及访问压力，搭建主从集群时，双方MySQL必须版本一致，至少主服务版本低于从服务，且两节点间时间需要同步。  数">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/MySQL%E4%B8%BB%E4%BB%8E%E5%90%8C%E6%AD%A5%E5%8E%9F%E7%90%86.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/mysql_master_status.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/MySQL%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/MySQL%E5%8D%8A%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/MySQL-MMM.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/MYSQL_MHA.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/MYSQL_MGR.png">
+<meta property="article:published_time" content="2021-04-24T11:52:21.000Z">
+<meta property="article:modified_time" content="2022-07-15T06:41:45.372Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/DB/MySQL/MySQL%E4%B8%BB%E4%BB%8E%E5%90%8C%E6%AD%A5%E5%8E%9F%E7%90%86.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            DB
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            MongoDB
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/MongoDB/MongoDB%E5%9F%BA%E7%A1%80/">MongoDB基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            mysql
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%9F%BA%E7%A1%80/">MySQL基础</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%B8%B8%E7%94%A8SQL%E6%80%BB%E7%BB%93/">MySQL常用SQL总结</a></li>  <li class="file active"><a href="/blog/DB/mysql/MySQL%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84/">MySQL主从架构</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%86%85%E9%83%A8%E7%BB%84%E4%BB%B6%E7%BB%93%E6%9E%84/">MySQL内部组件结构</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%B8%8E%E9%94%81%E6%9C%BA%E5%88%B6/">MySQL事务隔离级别与锁机制</a></li>  <li class="file"><a href="/blog/DB/mysql/MVCC%E4%B8%8EBufferPool%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/"></a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            分库分表
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">分库分表</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            索引
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BD%BF%E7%94%A8/">索引的原理与使用</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%80/">索引优化一</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%BA%8C/">索引优化二</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%89/">索引优化三</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/DB/Explain%E5%B7%A5%E5%85%B7/">Explain工具</a></li>  <li class="file"><a href="/blog/DB/ShardingSphere%E5%9F%BA%E7%A1%80/">ShardingSphere基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Spring
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringBoot
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%20Jar%E5%8C%85%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot Jar包启动原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD/">SpringBoot资源加载</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D%E5%8E%9F%E7%90%86/">SpringBoot自动装配原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot启动原理</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Spring/Spring%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/">Spring整体架构</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%87%E9%9D%A2%E7%B1%BB%E8%A7%A3%E6%9E%90/">AOP切面类解析</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B0%83%E7%94%A8/">AOP创建代理与调用</a></li>  <li class="file"><a href="/blog/Spring/BeanDefinition%E8%A7%A3%E6%9E%90%E6%B3%A8%E5%86%8C/">BeanDefinition解析注册</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">Bean的生命周期</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">Bean的加载过程</a></li>  <li class="file"><a href="/blog/Spring/Hystrix%E6%80%BB%E7%BB%93/">Hystrix总结</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8/">IoC容器</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">IoC容器加载过程</a></li>  <li class="file"><a href="/blog/Spring/Spring%20Gzip%E5%8E%8B%E7%BC%A9/">Spring Gzip压缩</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">SpringMvc加载机制</a></li>  <li class="file"><a href="/blog/Spring/Spring%E5%88%9D%E5%A7%8B%E5%8C%96%E6%89%A9%E5%B1%95/">Spring初始化扩展</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%A4%84%E7%90%86%E5%88%86%E5%8F%91%E8%AF%B7%E6%B1%82%E5%8E%9F%E7%90%86/">SpringMvc处理分发请求原理</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%BC%82%E6%AD%A5%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/">SpringMvc异步原理及实现</a></li>  <li class="file"><a href="/blog/Spring/Spring%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B7%A8%E7%BA%BF%E7%A8%8B%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB/">Spring线程池跨线程数据共享</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/">事件监听器</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%A7%A3%E6%9E%90%E5%8E%9F%E7%90%86/">事务解析原理</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%B0%83%E7%94%A8%E5%8E%9F%E7%90%86/">事务调用原理</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Test
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Test/IT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">IT测试总结</a></li>  <li class="file"><a href="/blog/Test/UT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">UT测试总结</a></li>  <li class="file"><a href="/blog/Test/JMeter%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">JMeter日常总结</a></li>  <li class="file"><a href="/blog/Test/LoadRunner%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">LoadRunner日常总结</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-DB/mysql/MySQL主从架构" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/DB/">DB</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/DB/mysql/">mysql</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/MySQL/" rel="tag">MySQL</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/DB/mysql/MySQL%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84/">
+            <time datetime="2021-04-24T11:52:21.000Z" itemprop="datePublished">2021-04-24</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            MySQL主从架构
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <p>实际生产中，往往数据量会极为庞大，并且数据的安全性要求也更高，生产环境中MySQL必须是要搭建一套<strong>主从复制架构</strong>，同时可基于一些工具实现<strong>高可用架构</strong>。在此基础上则可基于一些中间件实现<strong>读写分离架构</strong>。若数据量非常大，还必须可实现<strong>分库分表</strong>的架构。</p>
+<p>通过搭建MySQL<strong>主从集群可缓解<code>MySQL</code>数据存储及访问压力</strong>，搭建主从集群时，<strong>双方MySQL必须版本一致</strong>，<strong>至少主服务版本低于从服务</strong>，且<strong>两节点间时间需要同步</strong>。</p>
+<ul>
+<li><strong>数据安全</strong>：给主服务增加一个<strong>数据备份</strong>，可搭建<strong>主从架构</strong>或基于主从架构搭建<strong>互主架构</strong></li>
+<li><strong>读写分离</strong>：读多写少的情况，主服务访问压力过大时，可将数据读请求转为由从服务来分担，主服务只负责数据写入请求</li>
+<li><strong>故障转移</strong>：当MySQL主服务宕机后可由一台从服务切换成为主服务，继续提供数据读写功能</li>
+</ul>
+<p>MySQL<strong>主从架构</strong>一般都是通过 <strong><code>binlog</code>日志文件</strong>来进行的，即在<strong>主服务上打开<code>binlog</code></strong> 记录每一步数据库操作，<strong>从服务</strong>上会有一个 <strong><code>IO</code>线程</strong>，负责<strong>跟主服务</strong>建立一个 <strong><code>TCP</code>连接</strong>请求主服务将 <strong><code>binlog</code></strong> 传输过来。且<strong>主库</strong>上会有一个 <strong><code>IO dump</code>线程</strong>，负责通过该 <strong><code>TCP</code></strong> 连接把 <strong><code>Binlog</code></strong> 日志传输给<strong>从库<code>IO</code>线程</strong>。从服务IO线程会把读取到的 <strong><code>binlog</code></strong> 日志数据写入自己的 <strong><code>relay</code>日志文件</strong>中。然后<strong>从服务上另外一个<code>SQL</code>线程读取<code>relay</code>日志内容进行操作重演</strong>，达到还原数据的目的。通常对MySQL做的<strong>读写分离配置必须基于主从架构来搭建</strong>。</p>
+<p><img src="/../../../assets/png/DB/MySQL/MySQL%E4%B8%BB%E4%BB%8E%E5%90%8C%E6%AD%A5%E5%8E%9F%E7%90%86.png" alt="MySQL主从同步原理"></p>
+<p>MySQL的 <strong><code>Binlog</code></strong> 不光可用于<strong>主从同步</strong>，还可用于<strong>缓存数据同步</strong>等场景。如 <strong><code>Canal</code></strong> ，可<strong>模拟一个<code>Slave</code>节点向<code>MySQL</code>发起<code>Binlog</code>同步</strong>，然后将数据落到Redis、Kafka等其他组件，实现<strong>数据实时流转</strong>。</p>
+<h3 id="主从搭建"><a href="#主从搭建" class="headerlink" title="主从搭建"></a>主从搭建</h3><h4 id="主节点配置"><a href="#主节点配置" class="headerlink" title="主节点配置"></a>主节点配置</h4><p>对于主节点的配置文件 <strong><code>my.cnf</code></strong> 中，主要是添加打开 <strong><code>binlog</code></strong> 日志，以及指定 <strong><code>server-id</code></strong> ，配置好后 <strong><code>service mysqld restart</code></strong> 重启MySQL服务。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">[mysqld]</span></span><br><span class="line"><span class="comment"># 服务节点的唯一标识，需要给集群中的每个服务分配一个单独的ID</span></span><br><span class="line"><span class="attr">server-id</span>=<span class="string">47</span></span><br><span class="line"><span class="comment"># 打开Binlog日志记录，并指定文件名</span></span><br><span class="line"><span class="attr">log_bin</span>=<span class="string">master-bin</span></span><br><span class="line"><span class="comment"># Binlog日志文件</span></span><br><span class="line"><span class="attr">log_bin-index</span>=<span class="string">master-bin.index</span></span><br><span class="line"><span class="attr">skip-name-resolve</span></span><br><span class="line"><span class="comment"># 设置连接端口</span></span><br><span class="line"><span class="attr">port</span>=<span class="string">3306</span></span><br><span class="line"><span class="comment"># 设置mysql的安装目录</span></span><br><span class="line"><span class="attr">basedir</span>=<span class="string">/usr/local/mysql</span></span><br><span class="line"><span class="comment"># 设置mysql数据库的数据的存放目录</span></span><br><span class="line"><span class="attr">datadir</span>=<span class="string">/usr/local/mysql/mysql-files</span></span><br><span class="line"><span class="comment"># 允许最大连接数</span></span><br><span class="line"><span class="attr">max_connections</span>=<span class="string">200</span></span><br><span class="line"><span class="comment"># 允许连接失败的次数。</span></span><br><span class="line"><span class="attr">max_connect_errors</span>=<span class="string">10</span></span><br><span class="line"><span class="comment"># 服务端使用的字符集默认为UTF8</span></span><br><span class="line"><span class="attr">character-set-server</span>=<span class="string">utf8</span></span><br><span class="line"><span class="comment"># 创建新表时将使用的默认存储引擎</span></span><br><span class="line"><span class="attr">default-storage-engine</span>=<span class="string">INNODB</span></span><br><span class="line"><span class="comment"># 默认使用mysql_native_password插件认证</span></span><br><span class="line"><span class="attr">default_authentication_plugin</span>=<span class="string">mysql_native_password</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 需要同步的二进制数据库名</span></span><br><span class="line"><span class="attr">binlog-do-db</span>=<span class="string">masterdemo</span></span><br><span class="line"><span class="comment"># 只保留7天的二进制日志，以防磁盘被日志占满(可选)</span></span><br><span class="line"><span class="attr">expire-logs-days</span>=<span class="string">7</span></span><br><span class="line"><span class="comment"># 不备份的数据库</span></span><br><span class="line"><span class="attr">binlog-ignore-db</span>=<span class="string">information_schema</span></span><br><span class="line"><span class="attr">binlog-ignore-db</span>=<span class="string">performation_schema</span></span><br><span class="line"><span class="attr">binlog-ignore-db</span>=<span class="string">sys</span></span><br></pre></td></tr></table></figure>
+
+<p>给root用户分配一个 <strong><code>replication slave</code></strong> 的权限，然后通过 <strong><code>show master status</code></strong> 命令<strong>查看主节点同步状态</strong>。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 登录主数据库</span><br><span class="line">mysql <span class="operator">-</span>u root <span class="operator">-</span>p</span><br><span class="line"><span class="keyword">GRANT</span> REPLICATION SLAVE <span class="keyword">ON</span> <span class="operator">*</span>.<span class="operator">*</span> <span class="keyword">TO</span> <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;%&#x27;</span>;</span><br><span class="line">flush privileges;</span><br><span class="line"># 查看主节点同步状态：</span><br><span class="line"><span class="keyword">show</span> master status;</span><br></pre></td></tr></table></figure>
+
+<p> <strong><code>File</code></strong> 和 <strong><code>Position</code></strong> 表示当前日志 <strong><code>binlog</code></strong> 文件和<strong>文件中的索引</strong>。 <strong><code>Binlog_Do_DB</code></strong> 表示需要记录binlog文件的库， <strong><code>Binlog_Ignore_DB</code></strong> 不需要记录binlog文件的库，若没有进行配置，则表示针对全库记录日志。<br><img src="/../../../assets/png/DB/MySQL/mysql_master_status.png"></p>
+<p><strong>开启<code>binlog</code></strong> 后数据库中所有操作都会被记录到 <strong><code>datadir</code></strong> 当中，以一组<strong>轮询文件</strong>的方式<strong>循环记录</strong>。上面指令查到的 <strong><code>File</code></strong> 和 <strong><code>Position</code></strong> 就是<strong>当前日志文件</strong>和<strong>位置</strong>，配置<strong>从服务</strong>时需要通过 <strong><code>File</code></strong> 和 <strong><code>Position</code></strong> 通知从服务从哪个地方开始记录 <strong><code>binlog</code></strong> 。</p>
+<h4 id="从节点配置"><a href="#从节点配置" class="headerlink" title="从节点配置"></a>从节点配置</h4><p>从服务同样需要配置服务节点的唯一标识 <strong><code>server-id</code></strong> ，且需要打开 <strong><code>bin-log</code></strong> 日志记录，且需要打开 <strong><code>relay-log</code></strong> 日志。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">[mysqld]</span></span><br><span class="line"><span class="comment"># 主库和从库需要不一致</span></span><br><span class="line"><span class="attr">server-id</span>=<span class="string">48</span></span><br><span class="line"><span class="comment"># 打开MySQL中继日志</span></span><br><span class="line"><span class="attr">relay-log-index</span>=<span class="string">slave-relay-bin.index</span></span><br><span class="line"><span class="attr">relay-log</span>=<span class="string">slave-relay-bin</span></span><br><span class="line"><span class="comment"># 打开从服务二进制日志</span></span><br><span class="line"><span class="attr">log-bin</span>=<span class="string">mysql-bin</span></span><br><span class="line"><span class="comment"># 使得更新的数据写进二进制日志中</span></span><br><span class="line"><span class="attr">log-slave-updates</span>=<span class="string">1</span></span><br><span class="line"><span class="comment"># 设置3306端口</span></span><br><span class="line"><span class="attr">port</span>=<span class="string">3306</span></span><br><span class="line"><span class="comment"># 设置mysql的安装目录</span></span><br><span class="line"><span class="attr">basedir</span>=<span class="string">/usr/local/mysql</span></span><br><span class="line"><span class="comment"># 设置mysql数据库的数据的存放目录</span></span><br><span class="line"><span class="attr">datadir</span>=<span class="string">/usr/local/mysql/mysql-files</span></span><br><span class="line"><span class="comment"># 允许最大连接数</span></span><br><span class="line"><span class="attr">max_connections</span>=<span class="string">200</span></span><br><span class="line"><span class="comment"># 允许连接失败的次数。</span></span><br><span class="line"><span class="attr">max_connect_errors</span>=<span class="string">10</span></span><br><span class="line"><span class="comment"># 服务端使用的字符集默认为UTF8</span></span><br><span class="line"><span class="attr">character-set-server</span>=<span class="string">utf8</span></span><br><span class="line"><span class="comment"># 创建新表时将使用的默认存储引擎</span></span><br><span class="line"><span class="attr">default-storage-engine</span>=<span class="string">INNODB</span></span><br><span class="line"><span class="comment"># 默认使用mysql_native_password插件认证</span></span><br><span class="line"><span class="attr">default_authentication_plugin</span>=<span class="string">mysql_native_password</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 若salve库名称与master库名相同，使用本配置</span></span><br><span class="line"><span class="attr">replicate-do-db</span> = <span class="string">masterdemo </span></span><br><span class="line"><span class="comment"># 若master库名[mastdemo]与salve库名[mastdemo01]不同，使用以下配置[需要做映射]</span></span><br><span class="line"><span class="attr">replicate-rewrite-db</span> = <span class="string">masterdemo -&gt; masterdemo01</span></span><br><span class="line"><span class="comment"># 若不是要全部同步[默认全部同步]，则指定需要同步的表</span></span><br><span class="line"><span class="attr">replicate-wild-do-table</span>=<span class="string">masterdemo01.t_dict</span></span><br><span class="line"><span class="attr">replicate-wild-do-table</span>=<span class="string">masterdemo01.t_num</span></span><br></pre></td></tr></table></figure>
+
+<p>启动从服务设置其主节点同步状态， <strong><code>CHANGE MASTER</code></strong> 指令中需要指定的 <strong><code>MASTER_LOG_FILE</code></strong> 和 <strong><code>MASTER_LOG_POS</code></strong> 必须与<strong>主服务</strong>中查到的保持一致。且后续若要检查主从架构是否成功，也可<strong>通过检查主服务与从服务之间<code>File</code>和<code>Position</code>两个属性是否一致</strong>。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#登录从服务</span></span><br><span class="line"><span class="attr">mysql</span> <span class="string">-u root -p;</span></span><br><span class="line"><span class="comment">#设置同步主节点：</span></span><br><span class="line"><span class="attr">CHANGE</span> <span class="string">MASTER TO</span></span><br><span class="line"><span class="attr">MASTER_HOST</span>=<span class="string">&#x27;192.168.232.128&#x27;,</span></span><br><span class="line"><span class="attr">MASTER_PORT</span>=<span class="string">3306,</span></span><br><span class="line"><span class="attr">MASTER_USER</span>=<span class="string">&#x27;root&#x27;,</span></span><br><span class="line"><span class="attr">MASTER_PASSWORD</span>=<span class="string">&#x27;root&#x27;,</span></span><br><span class="line"><span class="attr">MASTER_LOG_FILE</span>=<span class="string">&#x27;master-bin.000008&#x27;,</span></span><br><span class="line"><span class="attr">MASTER_LOG_POS</span>=<span class="string">154</span></span><br><span class="line"><span class="attr">GET_MASTER_PUBLIC_KEY</span>=<span class="string">1;</span></span><br><span class="line"><span class="comment"># 开启slave</span></span><br><span class="line"><span class="attr">start</span> <span class="string">slave;</span></span><br><span class="line"><span class="comment"># 查看主从同步状态，或者用show slave status \G;这样查看比较简洁</span></span><br><span class="line"><span class="attr">show</span> <span class="string">slave status;</span></span><br></pre></td></tr></table></figure>
+
+<p>主从架构可能失败，若在 <strong><code>slave</code>从服务</strong>上查看slave状态，发现 <strong><code>Slave_SQL_Running=no</code></strong> 表示<strong>主从同步失败</strong>。这可能因为<strong>在从数据库进行了写操作</strong>，<strong>与同步过来的<code>SQL</code>操作冲突</strong>了，也可能 <strong><code>slave</code>从服务重启后有事务回滚</strong>了。</p>
+<h3 id="读写分离"><a href="#读写分离" class="headerlink" title="读写分离"></a>读写分离</h3><p><strong>主从集群是单向的</strong>只能<strong>从主服务同步到从服务</strong>，而从服务的数据表更新无法同步到主服务。为了保证数据一致，通常需要保证数据<strong>只在主服务上写</strong>，而从服务只进行数据读取。但<strong>MySQL主从本身无法提供读写分离服务</strong>，需要由业务自己来实现。</p>
+<p>需要限制用户写数据，可在从服务中将 <strong><code>read_only</code></strong> 参数的值设为 <strong><code>1</code></strong> ，<code>set global read_only=1;</code>可限制用户写入数据。但该属性有两个需要注意的地方：</p>
+<ul>
+<li><strong><code>read_only=1</code></strong> 设置<strong>只读模式</strong>，<strong>不影响slave同步复制功能</strong></li>
+<li><strong><code>read_only=1</code></strong> 设置的<strong>只读模式</strong>，  <strong>限定的是普通用户进行数据修改的操作</strong>，但<strong>不限定具有<code>super</code>权限的用户的数据修改操作</strong>。 若需<strong>限定<code>super</code>权限</strong>的用户<strong>写数据</strong>可设置 <strong><code>super_read_only=0</code></strong> 。若想连<code>super</code>权限用户的写操作也禁止使用 <strong><code>flush tables with read lock;</code></strong> ，但<strong>该设置会阻止主从同步复制</strong>。</li>
+</ul>
+<h3 id="其他集群方式"><a href="#其他集群方式" class="headerlink" title="其他集群方式"></a>其他集群方式</h3><p>若想进一步提高整个集群的<strong>读能力</strong>，可扩展出<strong>一主多从</strong>，为了减轻主节点进行数据同步的压力，可继续扩展出<strong>多级从</strong>的主从集群。为了提高整个集群的高可用能力，可扩展出<strong>多主集群</strong>。</p>
+<p>也可扩展出<strong>互为主从的互主集群</strong>甚至是<strong>环形的主从集群</strong>，实现MySQL多活部署。搭建<strong>互主集群</strong>只需要按照主从方式，且<strong>在主服务上打开一个<code>slave</code>进程</strong>，且<strong>指向slave节点<code>binlog</code>当前文件地址和位置</strong>。</p>
+<p>传统的Binlog方式搭建集群是<strong>基于日志记录点</strong>的方式来进行<strong>主从同步</strong>，还可<strong>通过<code>GTID</code>搭建方式搭建主从同步</strong>， <strong><code>GTID</code>本质也是基于<code>Binlog</code>来实现的主从同步</strong>，<code>GTID</code>是<strong>基于一个全局事务<code>ID</code>来标识同步进度</strong>。该GTID全局事务ID是一个<strong>全局唯一</strong>且<strong>趋势递增的分布式<code>ID</code>策略</strong>。</p>
+<p>GTID搭建方式是从MySQL5.6版本引入，即用到上面 <strong><code>Executed_Grid_Set</code></strong> 列，首先<strong>从服务器</strong>会告诉主服务器已经在从服务器执行<strong>完了哪些事务的<code>GTID</code>值</strong>，主库会把所有没有在从库上执行的事务，发送到从库上进行执行，且使用 <strong><code>GTID</code></strong> 复制<strong>可保证同一个事务只在指定从库上执行一次</strong>，<strong>可避免由于偏移量问题造成数据不一致</strong>。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 主节点my.cnf文件中添加如下配置</span></span><br><span class="line"><span class="attr">gtid_mode</span>=<span class="string">on</span></span><br><span class="line"><span class="attr">enforce_gtid_consistency</span>=<span class="string">on</span></span><br><span class="line"><span class="attr">log_bin</span>=<span class="string">on</span></span><br><span class="line"><span class="attr">server_id</span>=<span class="string">1</span></span><br><span class="line"><span class="attr">binlog_format</span>=<span class="string">row</span></span><br><span class="line"><span class="comment"># 从节点my.cnf文件中添加如下配置</span></span><br><span class="line"><span class="attr">gtid_mode</span>=<span class="string">on</span></span><br><span class="line"><span class="attr">enforce_gtid_consistency</span>=<span class="string">on</span></span><br><span class="line"><span class="attr">log_slave_updates</span>=<span class="string">1</span></span><br><span class="line"><span class="attr">server_id</span>=<span class="string">2</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="集群扩容"><a href="#集群扩容" class="headerlink" title="集群扩容"></a>集群扩容</h3><p>若集群已运行一段时间，这时若要扩展新的从节点，之前的数据没办法从binlog来恢复。这时在扩展新的slave节点时，需要增加一个数据复制的操作。使用mysql的bin目录下的 <strong><code>mysqldump</code></strong> 工具生成数据备份文件。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 在主库生成数据备份文件</span><br><span class="line">mysqldump <span class="operator">-</span>u root <span class="operator">-</span>p <span class="comment">--all-databases &gt; backup.sql</span></span><br><span class="line"></span><br><span class="line"># 从库上将该文件导入即可</span><br><span class="line">mysql <span class="operator">-</span>u root <span class="operator">-</span>p <span class="operator">&lt;</span> backup.sql</span><br></pre></td></tr></table></figure>
+
+<h3 id="延迟问题"><a href="#延迟问题" class="headerlink" title="延迟问题"></a>延迟问题</h3><p><strong>主从复制之间会有延迟</strong>，在做了读写分离后会更容易体现出来。即数据往主服务写，而读数据在从服务读。主从复制延迟可能造成刚插入了数据但查不到，<strong>大型集群中会很容易出现</strong>。</p>
+<p>出现这个问题的根本在于，面向业务的<strong>主服务数据都是多线程并发写入的</strong>，而<strong>从服务是单个线程慢慢拉取<code>binlog</code></strong> ，这中间会有效率差。所以解决这个问题的关键是要<strong>让从服务也用多线程并行复制<code>binlog</code>数据</strong>。MySQL5.7开始支持<strong>并行复制</strong>。可在从服务上设置 <strong><code>slave_parallel_workers</code></strong> 为一个<strong>大于<code>0</code></strong> 的数，然后把 <strong><code>slave_parallel_type</code></strong> 设置为 <strong><code>LOGICAL_CLOCK</code></strong> 。</p>
+<h3 id="半同步赋值"><a href="#半同步赋值" class="headerlink" title="半同步赋值"></a>半同步赋值</h3><p>MySQL<strong>主从集群默认采用异步复制机制</strong>。主服务在执行用户提交的事务后写入binlog日志，然后给客户端返回成功响应，而binlog会由一个dump线程异步发送给Slave从服务。<br><img src="/../../../assets/png/DB/MySQL/MySQL%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6.png" alt="MySQL异步复制"></p>
+<p>由于发送binlog过程是异步的，主服务在向客户端反馈执行结果时，不知道binlog是否同步成功。若此时主服务宕机，而从服务还没有备份到新执行的binlog可能会丢数据。这就要靠MySQL的<strong>半同步复制机制</strong>来保证数据安全。</p>
+<p><strong>半同步复制机制</strong>是一种<strong>介于异步复制和全同步复制之前的机制</strong>，主库在执行完客户端提交的事务后，并不是立即返回客户端响应，而是等待至少一个从库接收并写到 <strong><code>relay log</code></strong> 中才返回给客户端，MySQL在等待确认时默认等待 <strong><code>10s</code></strong> ，若<strong>超过<code>10s</code>没有收到<code>ack</code>则会降级成为异步复制</strong>。<br><img src="/../../../assets/png/DB/MySQL/MySQL%E5%8D%8A%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6.png" alt="MySQL半同步复制"></p>
+<p>半同步复制相比异步复制，能够有效的提高数据的安全性，但这种安全性不是绝对的，其<strong>只保证事务提交后的<code>binlog</code>至少传输到了一个从库</strong>，<strong>不保证从库应用该事务binlog成功</strong>。</p>
+<p><strong>半同步复制机制会造成一定程度的延迟</strong>，该延迟时间<strong>至少</strong>是一个 <strong><code>TCP/IP</code></strong> 请求往返的时间。整个服务性能会有所下降。而当从服务出现问题时，主服务需要等待的时间就会更长，要等到从服务的服务恢复或者请求超时才能给用户响应。</p>
+<p><strong>半同步复制</strong>需要<strong>基于特定扩展模块来实现</strong>，而 <strong><code>MySQL5.5</code></strong> 版本开始默认自带了该模块。该模块包含在<strong>MySQL安装目录下<code>lib/plugin</code>目录下<code>semisync_master.so</code>和<code>semisync_slave.so</code>两个文件中</strong>。需<strong>在主服务上安装<code>semisync_master</code>模块</strong>，<strong>从服务上安装<code>semisync_slave</code>模块</strong>。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 通过扩展库来安装半同步复制模块，需要指定扩展库的文件名</span></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">install plugin rpl_semi_sync_master soname &#x27;semisync_master.so&#x27;;</span></span><br><span class="line"><span class="attr">Query</span> <span class="string">OK, 0 rows affected (0.01 sec)</span></span><br><span class="line"><span class="comment"># 打开半同步复制开关</span></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">set global rpl_semi_sync_master_enabled=ON;</span></span><br><span class="line"><span class="attr">Query</span> <span class="string">OK, 0 rows affected (0.00 sec)</span></span><br><span class="line"><span class="comment"># 查看系统全局参数，rpl_semi_sync_master_timeout就是半同步复制等待应答最长等待时间，默认10秒</span></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">show global variables like &#x27;rpl_semi%&#x27;;</span></span><br><span class="line"><span class="attr">+-------------------------------------------+------------+</span></span><br><span class="line"><span class="attr">|</span> <span class="string">Variable_name                             | Value      |</span></span><br><span class="line"><span class="attr">+-------------------------------------------+------------+</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_master_enabled              | ON        |</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_master_timeout              | 10000      | # 默认10秒</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_master_trace_level          | 32         |</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_master_wait_for_slave_count | 1          |</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_master_wait_no_slave        | ON         |</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_master_wait_point           | AFTER_SYNC | # 表示一种半同步复制的方式</span></span><br><span class="line"><span class="attr">+-------------------------------------------+------------+</span></span><br><span class="line"><span class="attr">6</span> <span class="string">rows in set, 1 warning (0.02 sec)</span></span><br></pre></td></tr></table></figure>
+
+<p>半同步复制有 <strong><code>AFTER_SYNC</code></strong> 和 <strong><code>AFTER_COMMIT</code></strong> 两种方式：</p>
+<ul>
+<li><strong><code>AFTER_SYNC</code></strong> 方式，主库把日志写入binlog且复制给从库，然后开始等待从库的响应。<strong>从库返回成功后主库再提交事务</strong>，接着给客户端返回一个成功响应。</li>
+<li><strong><code>AFTER_COMMIT</code></strong> 方式，主库写入binlog后等待binlog复制到从库，<strong>主库就提交自己本地事务，再等待从库返回给自己一个成功响应</strong>，然后主库再给客户端返回响应。<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 通过扩展库来安装半同步复制模块，需要指定扩展库的文件名</span></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">install plugin rpl_semi_sync_slave soname &#x27;semisync_slave.so&#x27;;</span></span><br><span class="line"><span class="attr">Query</span> <span class="string">OK, 0 rows affected (0.01 sec)</span></span><br><span class="line"><span class="comment"># 打开半同步复制开关</span></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">set global rpl_semi_sync_slave_enabled = on;</span></span><br><span class="line"><span class="attr">Query</span> <span class="string">OK, 0 rows affected (0.00 sec)</span></span><br><span class="line"><span class="comment"># 查看系统全局参数</span></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">show global variables like &#x27;rpl_semi%&#x27;;</span></span><br><span class="line"><span class="attr">+---------------------------------+-------+</span></span><br><span class="line"><span class="attr">|</span> <span class="string">Variable_name                   | Value |</span></span><br><span class="line"><span class="attr">+---------------------------------+-------+</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_slave_enabled     | ON    |</span></span><br><span class="line"><span class="attr">|</span> <span class="string">rpl_semi_sync_slave_trace_level | 32    |</span></span><br><span class="line"><span class="attr">+---------------------------------+-------+</span></span><br><span class="line"><span class="attr">2</span> <span class="string">rows in set, 1 warning (0.00 sec)</span></span><br><span class="line"><span class="comment"># 安装完slave端的半同步插件后，需要重启下slave服务</span></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">stop slave;</span></span><br><span class="line"><span class="attr">Query</span> <span class="string">OK, 0 rows affected (0.01 sec)</span></span><br><span class="line"></span><br><span class="line"><span class="attr">mysql&gt;</span> <span class="string">start slave;</span></span><br><span class="line"><span class="attr">Query</span> <span class="string">OK, 0 rows affected (0.01 sec)</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="MySQL高可用方案"><a href="#MySQL高可用方案" class="headerlink" title="MySQL高可用方案"></a>MySQL高可用方案</h3><p>使用MySQL自身功能来搭建的集群，<strong>不具备高可用功能</strong>，若MySQL主服务挂了，<strong>从服务没办法自动切换成主服务</strong>。常见的MySQL集群方案有三种:   <strong><code>MMM</code></strong> 、 <strong><code>MHA</code></strong> 、 <strong><code>MGR</code></strong> 。共同点： </p>
+<ul>
+<li>对主从复制集群中的Master节点进行监控</li>
+<li>自动的对Master进行迁移，通过VIP虚拟IP。</li>
+<li>重新配置集群中其它slave对新的Master进行同步</li>
+</ul>
+<h4 id="MMM"><a href="#MMM" class="headerlink" title="MMM"></a>MMM</h4><p>Master-Master replication manager for MySQL即 <strong><code>MySQL</code>主主复制管理器</strong>是一套由 <strong><code>Perl</code></strong> 语言实现的脚本程序，可对MySQL集群进行监控和故障迁移，需要两个Master，但同一时间只有一个Master对外提供服务，可以说是<strong>主备模式</strong>。</p>
+<p>通过一个VIP即虚拟IP机制来保证集群高可用，主节点上会通过一个虚拟IP地址来提供数据读写服务，当出现故障时，<strong>虚拟IP从原来主节点漂移到其他节点</strong>，由其他节点提供服务。<br><img src="/../../../assets/png/DB/MySQL/MySQL-MMM.png" alt="MySQL-MMM"><br>提供了读写VIP的配置，使<strong>读写请求都可以达到高可用</strong>；<strong>工具包相对比较完善</strong>，不需要额外的开发脚本；<strong>完成故障转移之后可对MySQL集群进行高可用监控</strong>；但故障简单粗暴，<strong>容易丢失事务</strong>，建议采用半同步复制方式，减少失败的概率；目前 <strong><code>MMM</code>社区已经缺少维护</strong>，<strong>不支持基于<code>GTID</code>的复制</strong>；适用于<strong>读写都需要高可用的场景</strong>以及<strong>基于日志点的复制方式</strong>。</p>
+<h4 id="MHA"><a href="#MHA" class="headerlink" title="MHA"></a>MHA</h4><p>Master High Availability Manager and Tools for MySQL由日本人开发基于 <strong><code>Perl</code></strong> 脚本。专门用于监控主库状态，当发现Master节点故障时，会提升其中拥有新数据的Slave节点成为新的Master节点，在此期间MHA会<strong>通过其他从节点获取额外信息来避免数据一致性方面的问题</strong>。MHA还提供了Mater节点的<strong>在线切换</strong>功能，MHA能够在 <strong><code>30</code>秒内实现故障切换</strong>，并能在故障切换过程中，最大程度的保证数据一致性。</p>
+<p>MHA需要单独部署，分为Manager节点和Node节点。Manager节点一般是单独部署一台机器。而Node节点一般部署在每台MySQL机器上，Node节点得通过解析各个MySQL的日志来进行一些操作。</p>
+<p>Manager节点会通过探测集群里Node节点去判断各个Node所在机器上的MySQL运行是否正常，若发现某个Master故障则直接把他的一个Slave提升为Master，然后让其他Slave都挂到新的Master上去，完全透明。<br><img src="/../../../assets/png/DB/MySQL/MYSQL_MHA.png" alt="MYSQL_MHA"><br><strong>支持日志点复制方式和<code>GTID</code>方式</strong>；同MMM相比，MHA会尝试<strong>从旧Master中恢复旧二进制日志</strong>，但未必每次都能成功。若希望更少的数据丢失场景，建议使用MHA架构。但 <strong><code>MHA</code>需要自行开发<code>VIP</code>转移脚本</strong>；MHA<strong>只监控Master状态未监控Slave状态</strong>；</p>
+<h4 id="MGR"><a href="#MGR" class="headerlink" title="MGR"></a>MGR</h4><p>MGR：MySQL Group Replication是MySQL官方在5.7.17版本正式推出的一种<strong>组复制机制</strong>。<strong>主要是解决传统异步复制和半同步复制的数据一致性问题</strong>。由若干个节点共同组成一个复制组，一个事务提交后，必须经过超过半数节点的决议并通过后才可提交。MGR依靠分布式一致性协议Paxos协议的一个变体，实现了分布式下数据的最终一致性，提供了真正的数据高可用方案。</p>
+<p><strong>支持多主模式</strong>，但官方<strong>推荐单主模式</strong>，多主模式下，客户端可以随机向MySQL节点写入数据，单主模式下MGR集群会选出primary节点负责写请求，primary节点与其它节点都可以进行读请求处理。<br><img src="/../../../assets/png/DB/MySQL/MYSQL_MGR.png" alt="MYSQL_MGR"><br>基本无延迟，延迟比异步的小很多，支持多写模式，但是<strong>目前还不是很成熟</strong>，数据的强一致性，可以保证数据事务不丢失；<strong>仅支持innodb</strong>，且每个表必须提供<strong>主键</strong>，只能用在GTID模式下，且日志格式为row格式。适用于对<strong>主从延迟比较敏感</strong>，希望对写服务提供高可用，又不想安装第三方软件，数据强一致的场景。</p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/DB/mysql/MySQL%E5%86%85%E9%83%A8%E7%BB%84%E4%BB%B6%E7%BB%93%E6%9E%84/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    MySQL内部组件结构
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/DB/mysql/MySQL%E5%B8%B8%E7%94%A8SQL%E6%80%BB%E7%BB%93/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">MySQL常用SQL总结</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

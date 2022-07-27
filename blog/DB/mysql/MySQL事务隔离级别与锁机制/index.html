@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>MySQL事务隔离级别与锁机制 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="MySQL">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="事务基本特征ACID 事务是并发控制的单位，是用户定义的一个操作序列，由一组SQL语句组成的逻辑处理单元，这些操作要么都成功，要么都失败，是一个不可分割的工作单位。  Atomicity原子性：事务中的包含的操作被看做是一个逻辑单元，要么全部成功，要么全部失败 Isolation隔离性：多个用户可对同一个数据并发访问，而不破坏数据的正确性和完整性，并行事务的修改必须与其他并行事务的修改相互独立 C">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL事务隔离级别与锁机制">
+<meta property="og:url" content="http://example.com/blog/DB/mysql/MySQL%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%B8%8E%E9%94%81%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="事务基本特征ACID 事务是并发控制的单位，是用户定义的一个操作序列，由一组SQL语句组成的逻辑处理单元，这些操作要么都成功，要么都失败，是一个不可分割的工作单位。  Atomicity原子性：事务中的包含的操作被看做是一个逻辑单元，要么全部成功，要么全部失败 Isolation隔离性：多个用户可对同一个数据并发访问，而不破坏数据的正确性和完整性，并行事务的修改必须与其他并行事务的修改相互独立 C">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/read_uncommit_1.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/read_committed_1.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/repeatable_read_1.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/lock_innodb_row_lock.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/lock_range_1.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/lock_range_wait_2.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/lock_range_wait_3.png">
+<meta property="og:image" content="http://example.com/assets/png/DB/MySQL/lock_dead_2.png">
+<meta property="article:published_time" content="2021-04-24T14:12:21.000Z">
+<meta property="article:modified_time" content="2022-07-20T10:17:42.590Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/DB/MySQL/read_uncommit_1.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            DB
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            MongoDB
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/MongoDB/MongoDB%E5%9F%BA%E7%A1%80/">MongoDB基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            mysql
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%9F%BA%E7%A1%80/">MySQL基础</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%B8%B8%E7%94%A8SQL%E6%80%BB%E7%BB%93/">MySQL常用SQL总结</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84/">MySQL主从架构</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%86%85%E9%83%A8%E7%BB%84%E4%BB%B6%E7%BB%93%E6%9E%84/">MySQL内部组件结构</a></li>  <li class="file active"><a href="/blog/DB/mysql/MySQL%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%B8%8E%E9%94%81%E6%9C%BA%E5%88%B6/">MySQL事务隔离级别与锁机制</a></li>  <li class="file"><a href="/blog/DB/mysql/MVCC%E4%B8%8EBufferPool%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/"></a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            分库分表
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">分库分表</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            索引
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BD%BF%E7%94%A8/">索引的原理与使用</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%80/">索引优化一</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%BA%8C/">索引优化二</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%89/">索引优化三</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/DB/Explain%E5%B7%A5%E5%85%B7/">Explain工具</a></li>  <li class="file"><a href="/blog/DB/ShardingSphere%E5%9F%BA%E7%A1%80/">ShardingSphere基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Spring
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringBoot
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%20Jar%E5%8C%85%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot Jar包启动原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD/">SpringBoot资源加载</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D%E5%8E%9F%E7%90%86/">SpringBoot自动装配原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot启动原理</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Spring/Spring%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/">Spring整体架构</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%87%E9%9D%A2%E7%B1%BB%E8%A7%A3%E6%9E%90/">AOP切面类解析</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B0%83%E7%94%A8/">AOP创建代理与调用</a></li>  <li class="file"><a href="/blog/Spring/BeanDefinition%E8%A7%A3%E6%9E%90%E6%B3%A8%E5%86%8C/">BeanDefinition解析注册</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">Bean的生命周期</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">Bean的加载过程</a></li>  <li class="file"><a href="/blog/Spring/Hystrix%E6%80%BB%E7%BB%93/">Hystrix总结</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8/">IoC容器</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">IoC容器加载过程</a></li>  <li class="file"><a href="/blog/Spring/Spring%20Gzip%E5%8E%8B%E7%BC%A9/">Spring Gzip压缩</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">SpringMvc加载机制</a></li>  <li class="file"><a href="/blog/Spring/Spring%E5%88%9D%E5%A7%8B%E5%8C%96%E6%89%A9%E5%B1%95/">Spring初始化扩展</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%A4%84%E7%90%86%E5%88%86%E5%8F%91%E8%AF%B7%E6%B1%82%E5%8E%9F%E7%90%86/">SpringMvc处理分发请求原理</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%BC%82%E6%AD%A5%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/">SpringMvc异步原理及实现</a></li>  <li class="file"><a href="/blog/Spring/Spring%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B7%A8%E7%BA%BF%E7%A8%8B%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB/">Spring线程池跨线程数据共享</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/">事件监听器</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%A7%A3%E6%9E%90%E5%8E%9F%E7%90%86/">事务解析原理</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%B0%83%E7%94%A8%E5%8E%9F%E7%90%86/">事务调用原理</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Test
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Test/IT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">IT测试总结</a></li>  <li class="file"><a href="/blog/Test/UT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">UT测试总结</a></li>  <li class="file"><a href="/blog/Test/JMeter%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">JMeter日常总结</a></li>  <li class="file"><a href="/blog/Test/LoadRunner%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">LoadRunner日常总结</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-DB/mysql/MySQL事务隔离级别与锁机制" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/DB/">DB</a><i class="fa fa-angle-right"></i><a class="article-category-link" href="/categories/DB/mysql/">mysql</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/MySQL/" rel="tag">MySQL</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/DB/mysql/MySQL%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%B8%8E%E9%94%81%E6%9C%BA%E5%88%B6/">
+            <time datetime="2021-04-24T14:12:21.000Z" itemprop="datePublished">2021-04-24</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            MySQL事务隔离级别与锁机制
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <h3 id><a href="#" class="headerlink" title></a></h3><p>事务基本特征ACID</p>
+<p>事务是并发控制的单位，是用户定义的一个操作序列，由一组<code>SQL</code>语句组成的逻辑处理单元，这些操作要么都成功，要么都失败，是一个不可分割的工作单位。</p>
+<ul>
+<li><strong><code>Atomicity</code>原子性</strong>：事务中的包含的操作被看做是<strong>一个逻辑单元</strong>，要么<strong>全部成功</strong>，要么<strong>全部失败</strong></li>
+<li><strong><code>Isolation</code>隔离性</strong>：<strong>多个用户</strong>可对同一个数据并发访问，而<strong>不破坏</strong>数据的<strong>正确性</strong>和<strong>完整性</strong>，<strong>并行事务的修改</strong>必须与其他并行事务的修改<strong>相互独立</strong></li>
+<li><strong><code>Consistency</code>一致性</strong>：<strong>合法的数据被写入到数据库</strong>，否则<strong>事务回滚</strong>到最初状态</li>
+<li><strong><code>Durability</code>持久性</strong>：事务结束后，事务处理的结果必须能够得到<strong>固化</strong></li>
+</ul>
+<h3 id="四种隔离级别"><a href="#四种隔离级别" class="headerlink" title="四种隔离级别"></a>四种隔离级别</h3><p>数据库一般都会并发执行多个事务，多个事务可能会并发的对相同的一批数据进行增删改查操作，可能就会导致<strong>脏写、脏读、不可重复读、幻读</strong>等问题；为了解决<strong>多事务并发问题</strong>，数据库设计了<strong>事务隔离机制、锁机制、<code>MVCC</code>多版本并发控制隔离机制</strong>，用一整套机制来解决多事务并发问题。</p>
+<h4 id="Read-Uncommitted读未提交"><a href="#Read-Uncommitted读未提交" class="headerlink" title="Read Uncommitted读未提交"></a><code>Read Uncommitted</code>读未提交</h4><p>级别最低，<strong>一个事务可读到另外一个事务未提交的数据</strong>，事务在<strong>读数据</strong>的时候并<strong>未对数据加锁</strong>，在<strong>修改数据</strong>的时候只对数据增加<strong>行级共享锁</strong>。</p>
+<p><strong>事务1</strong>读取某行记录时，<strong>事务2</strong>也能对这行记录进行读取、更新，因为<strong>事务1</strong>并未对数据增加任何锁；</p>
+<p>当<strong>事务2</strong>对该记录进行更新时，<strong>事务1</strong>再次读取该记录，能读到<strong>事务2</strong>对该记录的修改版本，因为<strong>事务2</strong>只增加了共享读锁，<strong>事务1</strong>可以再增加共享读锁读取数据，即使该修改尚未被提交；</p>
+<p><strong>事务1</strong>更新某行记录时，<strong>事务2</strong>不能对这行记录做更新，直到<strong>事务1</strong>结束，因为<strong>事务1</strong>对数据增加了共享读锁，<strong>事务2</strong>不能增加排他写锁进行数据的修改</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> tx_isolation<span class="operator">=</span><span class="string">&#x27;Read-Uncommitted&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p><img src="/../../../assets/png/DB/MySQL/read_uncommit_1.png"></p>
+<h4 id="Read-Committed读已提交"><a href="#Read-Committed读已提交" class="headerlink" title="Read Committed读已提交"></a><code>Read Committed</code>读已提交</h4><p>在一个事务修改数据过程中，如果事务还没提交，其他事务不能读该数据，事务对当前被读取的数据加<strong>行级共享锁</strong>且当读到时才加锁，一旦读完该行，立即释放该行级共享锁；事务在<strong>更新某数据的瞬间</strong>，必须先对其加<strong>行级排他锁</strong>，直到事务结束才释放。</p>
+<p><strong>事务1</strong>在读取某行记录的整个过程中，<strong>事务2</strong>都可以对该行记录进行读取，因为<strong>事务1</strong>对该行记录增加行级共享锁的情况下，<strong>事务2</strong>同样可以对该数据增加共享锁来读数据；</p>
+<p><strong>事务1</strong>读取某行的一瞬间，<strong>事务2</strong>不能修改该行数据，但只要<strong>事务1</strong>读取完改行数据，<strong>事务2</strong>就可以对该行数据进行修改。因为<strong>事务1</strong>在读取的一瞬间会对数据增加共享锁，<strong>任何其他事务</strong>都不能对该行数据增加<strong>排他锁</strong>。但<strong>事务1</strong>只要读完该行数据，就会释放<strong>行级共享锁</strong>，一旦锁释放，<strong>事务2</strong>就可以对数据增加排他锁并修改数据；</p>
+<p><strong>事务1</strong>更新某行记录时，<strong>事务2</strong>不能对这行记录做更新，直到<strong>事务1</strong>结束。因为<strong>事务1</strong>在更新数据时，会对该行数据增加<strong>排他锁</strong>，直到事务结束才会释放锁，所以在<strong>事务2</strong>没有提交之前，<strong>事务1</strong>都能不对数据增加<strong>共享锁</strong>进行数据的读取。所以<strong>可以解决脏读的现象</strong>，但<strong>不能解决不可重复读现象</strong>。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> tx_isolation<span class="operator">=</span><span class="string">&#x27;Read-Committed&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p><img src="/../../../assets/png/DB/MySQL/read_committed_1.png"></p>
+<h4 id="Repeatable-Read可重复读"><a href="#Repeatable-Read可重复读" class="headerlink" title="Repeatable Read可重复读"></a><code>Repeatable Read</code>可重复读</h4><p>事务在读取某数据的瞬间，必须先对其加<strong>行级共享锁</strong>，直到事务结束才释放；事务在更新某数据的瞬间，必须先对其加<strong>行级排他锁</strong>，直到事务结束才释放。</p>
+<p><strong>事务1</strong>在读取某行记录的整个过程中，<strong>事务2</strong>都可以对该行记录进行读取，因为<strong>事务1</strong>对该行记录增加行级共享锁的情况下，<strong>事务2</strong>同样可以对该数据增加共享锁来读数据；</p>
+<p><strong>事务1</strong>在读取某行记录的整个过程中，<strong>事务2</strong>都不能修改该行数据，<strong>事务1</strong>在读取的<strong>整个过程</strong>会对数据增加共享锁，直到事务提交才会释放锁，所以整个过程中，<strong>任何其他事务</strong>都不能对该行数据增加排他锁。<strong>所以能解决不可重复读的读现象</strong>；</p>
+<p><strong>事务1</strong>更新某行记录时，<strong>事务2</strong>不能对这行记录做更新，直到<strong>事务1</strong>结束，<strong>事务1</strong>在更新数据的时候，会对该行数据增加排他锁，直到事务结束才会释放锁，所以在<strong>事务2</strong>没有提交之前，<strong>事务1</strong>都能不对数据增加共享锁进行数据的读取。<strong>所以可以解决可重复读的现象</strong>，但<strong>不能解决幻读现象</strong>。<strong>若事务1对数据进行修改，事务2也对数据进行修改，此时事务2会被阻塞，直到事务1提交事务</strong>，事务1提交事务后，事务2会马上执行完成，但此时事务1只能查到自己更新的数据。事务2也只能查到自己更新的数据，不能查到事务1更新的数据即使事务1提交事务后。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> tx_isolation<span class="operator">=</span><span class="string">&#x27;Repeatable-Read&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p><img src="/../../../assets/png/DB/MySQL/repeatable_read_1.png"></p>
+<h4 id="Serializable串行化"><a href="#Serializable串行化" class="headerlink" title="Serializable串行化"></a><code>Serializable</code>串行化</h4><p>可序列化的隔离级别中可以解决幻读，产生幻读的原因是事务在进行范围查询的时候没有增加<strong>范围锁</strong>所以导致幻读，范围锁**<code>range-locks</code><strong>：给<code>SELECT</code>  的查询中使用一个<code>WHERE</code>子句描述范围加锁。事务在读取数据时，必须先对其加</strong>表级共享锁**  ，直到事务结束才释放；事务在更新数据时，必须先对其加<strong>表级排他锁</strong>  ，直到事务结束才释放。</p>
+<p><strong>事务1</strong>正在读取<strong>A表</strong>中的记录时，则<strong>事务2</strong>也能读取<strong>A表</strong>，但不能对<strong>A表</strong>做<strong>更新、新增、删除</strong>，直到<strong>事务1</strong>结束，因为<strong>事务1</strong>对表增加了<strong>表级共享锁</strong>，<strong>其他事务</strong>只能增加<strong>共享锁读取数据</strong>，不能进行其他任何操作；</p>
+<p><strong>事务1</strong>正在<strong>更新A表</strong>中的记录时，则<strong>事务2</strong>不能读取<strong>A表</strong>的任意记录，更不可能对<strong>A表</strong>做更新、新增、删除，直到<strong>事务1</strong>结束，<strong>事务1</strong>对表增加了<strong>表级排他锁</strong>，其他事务不能对表增加共享锁或排他锁，也就无法进行任何操作；</p>
+<p>可序列化解决了<strong>脏读</strong>、<strong>不可重复读</strong>、<strong>幻读</strong>等读现象，但无法读取其它事务已修改但未提交的记录，在当前事务完成之前，其它事务不能修改目前事务已读取的记录，在当前事务完成之前，其它事务所插入的新记录，其索引键值不能在当前事务的任何语句所读取的索引键范围中。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> tx_isolation<span class="operator">=</span><span class="string">&#x27;Serializable&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="脏读"><a href="#脏读" class="headerlink" title="脏读"></a>脏读</h4><p>脏读又称<strong>无效数据的读出</strong>，在一个事务的处理过程中<strong>读到另一个未提的交事务中的数据</strong>。</p>
+<h4 id="不可重复读"><a href="#不可重复读" class="headerlink" title="不可重复读"></a>不可重复读</h4><p>在对数据库中的某个数据，<strong>一个事务范围内</strong>多次查询却返回了不同的数据值与脏读的区别是：不可重复读是<strong>读取了前一事务提交的数据</strong></p>
+<h4 id="虚读（幻读）"><a href="#虚读（幻读）" class="headerlink" title="虚读（幻读）"></a>虚读（幻读）</h4><p>事务在操作过程中两次查询，第二次查询的结果包含了第一次查询中<strong>未出现的数据</strong>或<strong>缺少</strong>第一次查询中出现的数据，一般解决幻读的方法是增加<strong>间隙锁</strong>，<strong>锁定检锁范围为只读</strong>，这样就避免了幻读。</p>
+<p>四种事务隔离级别从<strong>隔离程度上越来越高</strong>，但同时在<strong>并发性上也就越来越低</strong>。之所以有这么几种隔离级别，就是为了方便开发人员在开发过程中根据业务需要选择最合适的隔离级别。</p>
+<table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>读未提交</td>
+<td>可能</td>
+<td>可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td>读已提交</td>
+<td>不可能</td>
+<td>可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td>可重复读</td>
+<td>不可能</td>
+<td>不可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td>可串行化</td>
+<td>不可能</td>
+<td>不可能</td>
+<td>不可能</td>
+</tr>
+</tbody></table>
+<p>默认的事务隔离级别是<strong>可重复读</strong>，用Spring开发程序时，若不设置隔离级别默认用MySQL设置的隔离级别，若Spring设置了就用已经设置的隔离级别 ，查询和设置当前数据库事务隔离级别：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;tx_isolation&#x27;</span>;</span><br><span class="line"><span class="keyword">set</span> tx_isolation<span class="operator">=</span><span class="string">&#x27;REPEATABLE-READ&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="锁分类"><a href="#锁分类" class="headerlink" title="锁分类"></a>锁分类</h3><p>从性能上分为<strong>乐观锁</strong>，用版本对比来实现和<strong>悲观锁</strong>，从对数据库操作的类型分，分为<strong>读锁</strong>和<strong>写锁</strong>，都属于悲观锁，<strong>读锁是共享锁</strong>，<strong>S锁</strong>(<code>S</code>hared）：针对同一份数据，<strong>多个读操作可同时进行而互相不影响</strong>，<strong>写锁是排它锁</strong>，<strong>X锁</strong>(e<code>X</code>clusive）：当前写操作没有完成前，它<strong>会阻断其他写锁和读锁</strong>，从对数据操作的粒度分，分为<strong>表锁</strong>、<strong>间隙锁</strong>和<strong>行锁</strong>。</p>
+<h3 id="表级锁"><a href="#表级锁" class="headerlink" title="表级锁"></a>表级锁</h3><p>每次操作<strong>锁住整张表</strong>。<strong>开销小，加锁快，不会出现死锁，锁定粒度大，发生锁冲突的概率最高，并发度最低</strong>；一般用在<strong>整表数据迁移</strong>的场景。 表锁相关操作：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 手动增加表锁</span></span><br><span class="line">lock tables mylock write, employees read;</span><br><span class="line"><span class="comment">-- 查看表上加过的锁</span></span><br><span class="line"><span class="keyword">show</span> <span class="keyword">open</span> tables;</span><br><span class="line"><span class="comment">-- 删除表锁</span></span><br><span class="line">unlock tables;</span><br></pre></td></tr></table></figure>
+
+<h3 id="行级锁"><a href="#行级锁" class="headerlink" title="行级锁"></a>行级锁</h3><p>每次操作<strong>锁住一行数据</strong>。<strong>开销大，加锁慢，会出现死锁，锁定粒度最小，发生锁冲突的概率最低，并发度最高</strong>。</p>
+<p><strong><code>InnoDB</code>支持事务</strong>和<strong>行级锁</strong>，**<code>MylSAM</code>两者皆不支持<strong>。<code>MyISAM</code>在执行查询语句</strong><code>SELECT</code>前<strong>，会</strong>自动给涉及的所有表加读锁<strong>，在</strong>执行<code>update</code>、<code>insert</code>、<code>delete</code>操作会自动给涉及的表加写锁**。</p>
+<p><code>InnoDB</code>在<strong>非串行隔离级别</strong>下执行查询语句**<code>SELECT</code><strong>时，</strong>不会加锁<strong>，但</strong><code>update</code>、<code>insert</code>、<code>delete</code>操作会加行锁<strong>。简而言之，就是</strong>读锁会阻塞写<strong>，但是</strong>不会阻塞读<strong>。而</strong>写锁则会把读和写都阻塞**</p>
+<p>对<code>MyISAM</code>表的读操作，即加读锁，不会阻塞其他进程对同一表的读请求，但会阻赛对同一表的写请求，只有当，读锁释放后，才会执行其它进程的写操作。</p>
+<p>对<code>MylSAM</code>表的写操作，即加写锁，<strong>会阻塞其他进程对同一表的读和写操作</strong>，只有当写锁释放后，才会执行其它进程的读写操作。</p>
+<h3 id="行锁分析"><a href="#行锁分析" class="headerlink" title="行锁分析"></a>行锁分析</h3><p>通过检查<code>InnoDB_row_lock</code>状态变量来分析系统上的行锁的争夺情况</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> status <span class="keyword">like</span> <span class="string">&#x27;innodb_row_lock%&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p><img src="/../../../assets/png/DB/MySQL/lock_innodb_row_lock.png"></p>
+<ul>
+<li><strong><code>Innodb_row_lock_current_waits</code><strong>：当前</strong>正在等待锁的数量</strong></li>
+<li><strong><code>Innodb_row_lock_time</code><strong>：从系统启动到现在</strong>锁定总时间长度</strong></li>
+<li><strong><code>Innodb_row_lock_time_avg</code><strong>：每次等待</strong>平均时间</strong></li>
+<li><strong><code>Innodb_row_lock_time_max</code><strong>：从系统启动到现在</strong>等待最长的一次所花时间</strong></li>
+<li><strong><code>Innodb_row_lock_waits</code><strong>：系统启动后到现在</strong>总共等待的次数</strong></li>
+</ul>
+<p>当<strong>等待次数很高，且每次等待时长也不小时</strong>，就需要分析系统中为什么会有如此多的等待，然后根据分析结果着手制定优化计划</p>
+<h3 id="间隙锁"><a href="#间隙锁" class="headerlink" title="间隙锁"></a>间隙锁</h3><p><strong>锁的就是两个值之间的空隙</strong>，<strong>间隙锁在某些情况下可解决幻读问题，间隙锁在可重复读隔离级别下才会生效</strong>。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> account;</span><br></pre></td></tr></table></figure>
+<p><img src="/../../../assets/png/DB/MySQL/lock_range_1.png"></p>
+<p>该数据的间隙有id为**<code>(2, 10)</code><strong>，</strong><code>(10, 20)</code><strong>，</strong>(<code>20</code>, 正无穷)**这三个区间，全都是开区间；在<code>Session1</code>下执行：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">update</span> account <span class="keyword">set</span> name <span class="operator">=</span> <span class="string">&#x27;eleven11&#x27;</span> <span class="keyword">where</span> id <span class="operator">&gt;</span> <span class="number">8</span> <span class="keyword">and</span> id <span class="operator">&lt;</span><span class="number">18</span>;</span><br></pre></td></tr></table></figure>
+
+<p>则其他Session没法在这个范围所包含的所有行记录，<strong>包括间隙行记录</strong>，以及行记录所在的间隙里插入或修改任何数据，即**<code>id</code>在<code>(3,20]</code>区间都无法修改插入数据<strong>，这里的<code>(3,20]</code>叫做</strong>临键锁**；</p>
+<p><img src="/../../../assets/png/DB/MySQL/lock_range_wait_2.png"></p>
+<p>若上面例子中**<code>id &lt; 25</code><strong>，则相当于整个表都被锁住了，</strong>无法再更新或插入任何数据**。</p>
+<p><img src="/../../../assets/png/DB/MySQL/lock_range_wait_3.png"></p>
+<h3 id="临键锁"><a href="#临键锁" class="headerlink" title="临键锁"></a>临键锁</h3><p><strong><code>Next-Key Locks</code><strong>是</strong>行锁与间隙锁的组合</strong>。</p>
+<h3 id="无索引行锁会升级为表锁"><a href="#无索引行锁会升级为表锁" class="headerlink" title="无索引行锁会升级为表锁"></a>无索引行锁会升级为表锁</h3><p>锁主要是加在索引上，如果对非索引字段更新，行锁可能会变表锁，<code>InnoDB</code>的<strong>行锁是针对索引加的锁</strong>，不是针对记录加的锁。<strong>且该索引不能失效，否则都会从行锁升级为表锁</strong>。</p>
+<p>锁定某一行可用**<code>lock in share mode</code><strong>加共享锁，用</strong><code>for update</code>**加排它锁：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 加排它锁，其他session只能读这行数据，修改则会被阻塞，直到锁定行的session提交</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> employees <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br><span class="line"><span class="comment">-- 加共享锁</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> employees <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> lock <span class="keyword">in</span> share mode;</span><br></pre></td></tr></table></figure>
+
+<p>Innodb存储引擎由于实现了<strong>行级锁定</strong>，虽然在<strong>锁定机制的实现方面所带来的性能损耗可能比表级锁更高</strong>，但在<strong>整体并发处理能力方面要远远优于<code>MyISAM</code>的表级锁</strong>。当系统并发量高时，InnoDB整体性能和MyISAM相比会有比较明显的优势。</p>
+<p>但InnoDB的<strong>行级锁</strong>同样也有其脆弱的一面，当<strong>使用不当时</strong>，可能会让Innodb整体<strong>性能表现</strong>不仅不能比MyISAM高，甚至可能会更差。</p>
+<h3 id="查看INFORMATION-SCHEMA系统库锁相关数据表"><a href="#查看INFORMATION-SCHEMA系统库锁相关数据表" class="headerlink" title="查看INFORMATION_SCHEMA系统库锁相关数据表"></a>查看INFORMATION_SCHEMA系统库锁相关数据表</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看事务</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> INFORMATION_SCHEMA.INNODB_TRX;</span><br><span class="line"><span class="comment">-- 查看锁</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> INFORMATION_SCHEMA.INNODB_LOCKS;</span><br><span class="line"><span class="comment">-- 查看锁等待</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> INFORMATION_SCHEMA.INNODB_LOCK_WAITS;</span><br><span class="line"><span class="comment">-- 释放锁，trx_mysql_thread_id可以从INNODB_TRX表里查看到</span></span><br><span class="line">kill trx_mysql_thread_id;</span><br><span class="line"><span class="comment">-- 查看锁等待详细信息</span></span><br><span class="line"><span class="keyword">show</span> engine innodb status;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> tx_isolation<span class="operator">=</span><span class="string">&#x27;repeatable-read&#x27;</span>;</span><br><span class="line"><span class="comment">-- Session_1执行</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> account <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br><span class="line"><span class="comment">-- Session_2执行：</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> account <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">2</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br><span class="line"><span class="comment">-- Session_1执行：</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> account <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">2</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br><span class="line"><span class="comment">-- Session_2执行：</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> account <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br><span class="line"><span class="comment">-- 查看近期死锁日志信息：</span></span><br><span class="line"><span class="keyword">show</span> engine innodb status;</span><br></pre></td></tr></table></figure>
+<p><img src="/../../../assets/png/DB/MySQL/lock_dead_2.png"></p>
+<p>大多数情况mysql可以<strong>自动检测死锁并回滚产生死锁的那个事务</strong>，但是有些情况mysql没法自动检测死锁。</p>
+<h3 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h3><ul>
+<li><p><strong>尽可能让所有数据检索都通过索引来完成，避免无索引行锁升级为表锁</strong></p>
+</li>
+<li><p><strong>合理设计索引，尽量缩小锁的范围</strong></p>
+</li>
+<li><p><strong>尽可能减少检索条件范围，避免间隙锁</strong></p>
+</li>
+<li><p><strong>尽量控制事务大小，减少锁定资源量和时间长度，涉及事务加锁的sql尽量放在事务最后执行</strong></p>
+</li>
+<li><p><strong>尽可能低级别事务隔离</strong></p>
+</li>
+</ul>
+<h3 id="示例数据"><a href="#示例数据" class="headerlink" title="示例数据"></a>示例数据</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `account` (</span><br><span class="line"> `id` <span class="type">INT</span> (<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line"> `name` <span class="type">VARCHAR</span> (<span class="number">20</span>) <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span>,</span><br><span class="line"> `balance` <span class="type">VARCHAR</span> (<span class="number">20</span>) <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span>,</span><br><span class="line"> <span class="keyword">PRIMARY</span> KEY (`id`)</span><br><span class="line">) ENGINE <span class="operator">=</span> InnoDb <span class="keyword">DEFAULT</span> CHARSET <span class="operator">=</span> utf8;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 插入数据</span></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span>`account` (`id`, `name`, `balance`) <span class="keyword">VALUES</span> (<span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;zhangsan&#x27;</span>, <span class="number">800</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span>`account` (`id`, `name`, `balance`) <span class="keyword">VALUES</span> (<span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;lisi&#x27;</span>, <span class="number">3000</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span>`account` (`id`, `name`, `balance`) <span class="keyword">VALUES</span> (<span class="string">&#x27;10&#x27;</span>, <span class="string">&#x27;wanger&#x27;</span>, <span class="number">2000</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span>`account` (`id`, `name`, `balance`) <span class="keyword">VALUES</span> (<span class="string">&#x27;20&#x27;</span>, <span class="string">&#x27;mazi&#x27;</span>, <span class="number">1000</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/DB/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    分库分表
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/DB/MongoDB/MongoDB%E5%9F%BA%E7%A1%80/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">MongoDB基础</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
