@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>Canal基础 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="springCloud">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="Canal模拟MySQL Slave的交互协议伪装自己为MySQL Slave，向MySQL Master发送Dump协议MySQL Master收到Dump请求，开始推送Binary Log给Slave即Canal，Canal解析Binary Log对象，原始为byte流。  安装配置12345678910111213141516171819202122cd &#x2F;usr&#x2F;localmkdir ca">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Canal基础">
+<meta property="og:url" content="http://example.com/blog/Cloud/Canal%E5%9F%BA%E7%A1%80/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="Canal模拟MySQL Slave的交互协议伪装自己为MySQL Slave，向MySQL Master发送Dump协议MySQL Master收到Dump请求，开始推送Binary Log给Slave即Canal，Canal解析Binary Log对象，原始为byte流。  安装配置12345678910111213141516171819202122cd &#x2F;usr&#x2F;localmkdir ca">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/Canal%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/Canal%E6%A0%B8%E5%BF%83%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/Canal%E5%86%85%E9%83%A8%E5%8E%9F%E7%90%86.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/Canal%E9%AB%98%E5%8F%AF%E7%94%A8.png">
+<meta property="article:published_time" content="2021-12-30T07:08:20.000Z">
+<meta property="article:modified_time" content="2022-07-27T09:38:19.172Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="springCloud">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/SpringCloud/Canal%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  <li class="file active"><a href="/blog/Cloud/Canal%E5%9F%BA%E7%A1%80/">Canal基础</a></li>  <li class="file"><a href="/blog/Cloud/Feign%E9%9B%86%E6%88%90%E5%8E%9F%E7%90%86/">Feign集成原理</a></li>  <li class="file"><a href="/blog/Cloud/Ribbon%E9%9B%86%E6%88%90%E5%8E%9F%E7%90%86/">Ribbon集成原理</a></li>  <li class="file"><a href="/blog/Cloud/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">分布式事务解决方案</a></li>  <li class="file"><a href="/blog/Cloud/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/">分布式系统常见问题</a></li>  <li class="file"><a href="/blog/Cloud/%E7%A7%92%E6%9D%80%E9%97%AE%E9%A2%98%E5%8F%8A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">秒杀问题及解决方案</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            DB
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            MongoDB
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/MongoDB/MongoDB%E5%9F%BA%E7%A1%80/">MongoDB基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            mysql
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%9F%BA%E7%A1%80/">MySQL基础</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%B8%B8%E7%94%A8SQL%E6%80%BB%E7%BB%93/">MySQL常用SQL总结</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84/">MySQL主从架构</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%86%85%E9%83%A8%E7%BB%84%E4%BB%B6%E7%BB%93%E6%9E%84/">MySQL内部组件结构</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%B8%8E%E9%94%81%E6%9C%BA%E5%88%B6/">MySQL事务隔离级别与锁机制</a></li>  <li class="file"><a href="/blog/DB/mysql/MVCC%E4%B8%8EBufferPool%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/"></a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            分库分表
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">分库分表</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            索引
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BD%BF%E7%94%A8/">索引的原理与使用</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%80/">索引优化一</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%BA%8C/">索引优化二</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%89/">索引优化三</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/DB/Explain%E5%B7%A5%E5%85%B7/">Explain工具</a></li>  <li class="file"><a href="/blog/DB/ShardingSphere%E5%9F%BA%E7%A1%80/">ShardingSphere基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Spring
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringBoot
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%20Jar%E5%8C%85%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot Jar包启动原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD/">SpringBoot资源加载</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D%E5%8E%9F%E7%90%86/">SpringBoot自动装配原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot启动原理</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Spring/Spring%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/">Spring整体架构</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%87%E9%9D%A2%E7%B1%BB%E8%A7%A3%E6%9E%90/">AOP切面类解析</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B0%83%E7%94%A8/">AOP创建代理与调用</a></li>  <li class="file"><a href="/blog/Spring/BeanDefinition%E8%A7%A3%E6%9E%90%E6%B3%A8%E5%86%8C/">BeanDefinition解析注册</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">Bean的生命周期</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">Bean的加载过程</a></li>  <li class="file"><a href="/blog/Spring/Hystrix%E6%80%BB%E7%BB%93/">Hystrix总结</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8/">IoC容器</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">IoC容器加载过程</a></li>  <li class="file"><a href="/blog/Spring/Spring%20Gzip%E5%8E%8B%E7%BC%A9/">Spring Gzip压缩</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">SpringMvc加载机制</a></li>  <li class="file"><a href="/blog/Spring/Spring%E5%88%9D%E5%A7%8B%E5%8C%96%E6%89%A9%E5%B1%95/">Spring初始化扩展</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%A4%84%E7%90%86%E5%88%86%E5%8F%91%E8%AF%B7%E6%B1%82%E5%8E%9F%E7%90%86/">SpringMvc处理分发请求原理</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%BC%82%E6%AD%A5%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/">SpringMvc异步原理及实现</a></li>  <li class="file"><a href="/blog/Spring/Spring%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B7%A8%E7%BA%BF%E7%A8%8B%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB/">Spring线程池跨线程数据共享</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/">事件监听器</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%A7%A3%E6%9E%90%E5%8E%9F%E7%90%86/">事务解析原理</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%B0%83%E7%94%A8%E5%8E%9F%E7%90%86/">事务调用原理</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Test
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Test/IT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">IT测试总结</a></li>  <li class="file"><a href="/blog/Test/UT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">UT测试总结</a></li>  <li class="file"><a href="/blog/Test/JMeter%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">JMeter日常总结</a></li>  <li class="file"><a href="/blog/Test/LoadRunner%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">LoadRunner日常总结</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Cloud/Canal基础" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Cloud/">Cloud</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/springCloud/" rel="tag">springCloud</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/Cloud/Canal%E5%9F%BA%E7%A1%80/">
+            <time datetime="2021-12-30T07:08:20.000Z" itemprop="datePublished">2021-12-30</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Canal基础
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <p><strong><a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/alibaba/canal/releases">Canal</a>模拟MySQL Slave的交互协议伪装自己为MySQL Slave</strong>，向MySQL Master发送Dump协议MySQL Master收到Dump请求，开始推送Binary Log给Slave即Canal，Canal解析Binary Log对象，原始为byte流。</p>
+<p><img src="/../../assets/png/SpringCloud/Canal%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.png" alt="Canal工作原理"></p>
+<h4 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h4><figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">cd</span> <span class="string">/usr/local</span></span><br><span class="line"><span class="attr">mkdir</span> <span class="string">canal</span></span><br><span class="line"><span class="attr">tar</span> <span class="string">-zxvf canal.deployer-1.1.5.tar.gz</span></span><br><span class="line"><span class="attr">vim</span> <span class="string">conf/example/instance.properties</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 修改mysql配置</span></span><br><span class="line"><span class="attr">vim</span> <span class="string">/etc/my.cnf</span></span><br><span class="line"><span class="attr">log-bin</span>=<span class="string">mysql-bin  # 添加这一行就ok </span></span><br><span class="line"><span class="attr">binlog-format</span>=<span class="string">ROW  # 选择row模式 </span></span><br><span class="line"><span class="attr">server-id</span>=<span class="string">1        # 配置mysql replaction需要定义，不能和canal的slaveId重复</span></span><br><span class="line"><span class="attr">binlog-do-db</span>=<span class="string">micromall</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 执行mysql 创建canal用户</span></span><br><span class="line"><span class="attr">create</span> <span class="string">user canal identified by &#x27;canal&#x27;;</span></span><br><span class="line"><span class="attr">GRANT</span> <span class="string">SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO &#x27;canal&#x27;@&#x27;%&#x27;;</span></span><br><span class="line"><span class="attr">FLUSH</span> <span class="string">PRIVILEGES;</span></span><br><span class="line"><span class="comment"># 查看是否授权成功</span></span><br><span class="line"><span class="attr">select</span> <span class="string">* from user where user=&#x27;canal&#x27; </span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 启动canal</span></span><br><span class="line"><span class="attr">cd</span> <span class="string">bin</span></span><br><span class="line"><span class="attr">./startup.sh</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="基础配置"><a href="#基础配置" class="headerlink" title="基础配置"></a>基础配置</h4><p>修改**<code>instance.properties</code>**配置文件</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#################################################</span></span><br><span class="line"><span class="comment">## mysql serverId , v1.0.26+ will autoGen</span></span><br><span class="line"><span class="comment"># canal.instance.mysql.slaveId=0</span></span><br><span class="line"><span class="comment"># enable gtid use true/false</span></span><br><span class="line"><span class="attr">canal.instance.gtidon</span>=<span class="string">false</span></span><br><span class="line"><span class="comment"># position info</span></span><br><span class="line"><span class="attr">canal.instance.master.address</span>=<span class="string">127.0.0.1:3306</span></span><br><span class="line"><span class="attr">canal.instance.master.journal.name</span>=<span class="string"></span></span><br><span class="line"><span class="attr">canal.instance.master.position</span>=<span class="string"></span></span><br><span class="line"><span class="attr">canal.instance.master.timestamp</span>=<span class="string"></span></span><br><span class="line"><span class="attr">canal.instance.master.gtid</span>=<span class="string"></span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># rds oss binlog</span></span><br><span class="line"><span class="attr">canal.instance.rds.accesskey</span>=<span class="string"></span></span><br><span class="line"><span class="attr">canal.instance.rds.secretkey</span>=<span class="string"></span></span><br><span class="line"><span class="attr">canal.instance.rds.instanceId</span>=<span class="string"></span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># table meta tsdb info</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.enable</span>=<span class="string">true</span></span><br><span class="line"><span class="comment">#canal.instance.tsdb.url=jdbc:mysql://127.0.0.1:3306/canal_tsdb</span></span><br><span class="line"><span class="comment">#canal.instance.tsdb.dbUsername=canal</span></span><br><span class="line"><span class="comment">#canal.instance.tsdb.dbPassword=canal</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">#canal.instance.standby.address =</span></span><br><span class="line"><span class="comment">#canal.instance.standby.journal.name =</span></span><br><span class="line"><span class="comment">#canal.instance.standby.position =</span></span><br><span class="line"><span class="comment">#canal.instance.standby.timestamp =</span></span><br><span class="line"><span class="comment">#canal.instance.standby.gtid=</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 数据库username/password</span></span><br><span class="line"><span class="attr">canal.instance.dbUsername</span>=<span class="string">root</span></span><br><span class="line"><span class="attr">canal.instance.dbPassword</span>=<span class="string">root</span></span><br><span class="line"><span class="attr">canal.instance.connectionCharset</span> = <span class="string">UTF-8</span></span><br><span class="line"><span class="attr">canal.instance.defaultDatabaseName</span>=<span class="string">eleven</span></span><br><span class="line"><span class="comment"># enable druid Decrypt database password</span></span><br><span class="line"><span class="attr">canal.instance.enableDruid</span>=<span class="string">false</span></span><br><span class="line"><span class="comment">#canal.instance.pwdPublicKey=MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALK4BUxdDltRRE5/zXpVEVPUgunvscYFtEip3pmLlhrWpacX7y7GCMo2/JM6LeHmiiNdH1FWgGCpUfircSwlWKUCAwEAAQ==</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># table regex</span></span><br><span class="line"><span class="comment"># canal.instance.filter.regex=.*\\..*</span></span><br><span class="line"><span class="comment"># 配置表</span></span><br><span class="line"><span class="attr">canal.instance.filter.regex</span>=<span class="string">micromall.pms_product,micromall.sms_flash_promotion_product_relation</span></span><br><span class="line"><span class="comment"># table black regex</span></span><br><span class="line"><span class="attr">canal.instance.filter.black.regex</span>=<span class="string">mysql\\.slave_.*</span></span><br><span class="line"><span class="comment"># table field filter(format: schema1.tableName1:field1/field2,schema2.tableName2:field1/field2)</span></span><br><span class="line"><span class="comment">#canal.instance.filter.field=test1.t_product:id/subject/keywords,test2.t_company:id/name/contact/ch</span></span><br><span class="line"><span class="comment"># table field black filter(format: schema1.tableName1:field1/field2,schema2.tableName2:field1/field2)</span></span><br><span class="line"><span class="comment">#canal.instance.filter.black.field=test1.t_product:subject/product_image,test2.t_company:id/name/contact/ch</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># mq config</span></span><br><span class="line"><span class="comment"># 消息队列Topic</span></span><br><span class="line"><span class="attr">canal.mq.topic</span>=<span class="string">productDetailChange</span></span><br><span class="line"><span class="comment"># dynamic topic route by schema or table regex</span></span><br><span class="line"><span class="comment">#canal.mq.dynamicTopic=mytest1.user,mytest2\\..*,.*\\..*</span></span><br><span class="line"><span class="attr">canal.mq.partition</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># hash partition config</span></span><br><span class="line"><span class="comment">#canal.mq.partitionsNum=3</span></span><br><span class="line"><span class="comment">#canal.mq.partitionHash=test.table:id^name,.*\\..*</span></span><br><span class="line"><span class="comment">#canal.mq.dynamicTopicPartitionNum=test.*:4,mycanal:6</span></span><br></pre></td></tr></table></figure>
+
+<p>修改**<code>canal.properties</code>**配置文件</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#################################################</span></span><br><span class="line"><span class="comment">######### 		common argument		#############</span></span><br><span class="line"><span class="comment">#################################################</span></span><br><span class="line"><span class="comment"># tcp bind ip</span></span><br><span class="line"><span class="attr">canal.ip</span> =<span class="string"></span></span><br><span class="line"><span class="comment"># register ip to zookeeper</span></span><br><span class="line"><span class="attr">canal.register.ip</span> =<span class="string"></span></span><br><span class="line"><span class="attr">canal.port</span> = <span class="string">11111</span></span><br><span class="line"><span class="attr">canal.metrics.pull.port</span> = <span class="string">11112</span></span><br><span class="line"><span class="comment"># canal instance user/passwd</span></span><br><span class="line"><span class="comment"># canal.user = canal</span></span><br><span class="line"><span class="comment"># canal.passwd = E3619321C1A937C46A0D8BD1DAC39F93B27D4458</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># canal admin config</span></span><br><span class="line"><span class="comment">#canal.admin.manager = 127.0.0.1:8089</span></span><br><span class="line"><span class="attr">canal.admin.port</span> = <span class="string">11110</span></span><br><span class="line"><span class="attr">canal.admin.user</span> = <span class="string">admin</span></span><br><span class="line"><span class="attr">canal.admin.passwd</span> = <span class="string">4ACFE3202A5FF5CF467898FC58AAB1D615029441</span></span><br><span class="line"><span class="comment"># admin auto register</span></span><br><span class="line"><span class="comment">#canal.admin.register.auto = true</span></span><br><span class="line"><span class="comment">#canal.admin.register.cluster =</span></span><br><span class="line"><span class="comment">#canal.admin.register.name =</span></span><br><span class="line"></span><br><span class="line"><span class="attr">canal.zkServers</span> =<span class="string"></span></span><br><span class="line"><span class="comment"># flush data to zk</span></span><br><span class="line"><span class="attr">canal.zookeeper.flush.period</span> = <span class="string">1000</span></span><br><span class="line"><span class="attr">canal.withoutNetty</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># tcp, kafka, rocketMQ, rabbitMQ</span></span><br><span class="line"><span class="attr">canal.serverMode</span> = <span class="string">tcp</span></span><br><span class="line"><span class="comment"># flush meta cursor/parse position to file</span></span><br><span class="line"><span class="attr">canal.file.data.dir</span> = <span class="string">$&#123;canal.conf.dir&#125;</span></span><br><span class="line"><span class="attr">canal.file.flush.period</span> = <span class="string">1000</span></span><br><span class="line"><span class="comment">## memory store RingBuffer size, should be Math.pow(2,n)</span></span><br><span class="line"><span class="attr">canal.instance.memory.buffer.size</span> = <span class="string">16384</span></span><br><span class="line"><span class="comment">## memory store RingBuffer used memory unit size , default 1kb</span></span><br><span class="line"><span class="attr">canal.instance.memory.buffer.memunit</span> = <span class="string">1024 </span></span><br><span class="line"><span class="comment">## meory store gets mode used MEMSIZE or ITEMSIZE</span></span><br><span class="line"><span class="attr">canal.instance.memory.batch.mode</span> = <span class="string">MEMSIZE</span></span><br><span class="line"><span class="attr">canal.instance.memory.rawEntry</span> = <span class="string">true</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">## detecing config</span></span><br><span class="line"><span class="attr">canal.instance.detecting.enable</span> = <span class="string">false</span></span><br><span class="line"><span class="comment">#canal.instance.detecting.sql = insert into retl.xdual values(1,now()) on duplicate key update x=now()</span></span><br><span class="line"><span class="attr">canal.instance.detecting.sql</span> = <span class="string">select 1</span></span><br><span class="line"><span class="attr">canal.instance.detecting.interval.time</span> = <span class="string">3</span></span><br><span class="line"><span class="attr">canal.instance.detecting.retry.threshold</span> = <span class="string">3</span></span><br><span class="line"><span class="attr">canal.instance.detecting.heartbeatHaEnable</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># support maximum transaction size, more than the size of the transaction will be cut into multiple transactions delivery</span></span><br><span class="line"><span class="attr">canal.instance.transaction.size</span> =  <span class="string">1024</span></span><br><span class="line"><span class="comment"># mysql fallback connected to new master should fallback times</span></span><br><span class="line"><span class="attr">canal.instance.fallbackIntervalInSeconds</span> = <span class="string">60</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># network config</span></span><br><span class="line"><span class="attr">canal.instance.network.receiveBufferSize</span> = <span class="string">16384</span></span><br><span class="line"><span class="attr">canal.instance.network.sendBufferSize</span> = <span class="string">16384</span></span><br><span class="line"><span class="attr">canal.instance.network.soTimeout</span> = <span class="string">30</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># binlog filter config</span></span><br><span class="line"><span class="attr">canal.instance.filter.druid.ddl</span> = <span class="string">true</span></span><br><span class="line"><span class="attr">canal.instance.filter.query.dcl</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.query.dml</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.query.ddl</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.table.error</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.rows</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.transaction.entry</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.dml.insert</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.dml.update</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.filter.dml.delete</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># binlog format/image check</span></span><br><span class="line"><span class="attr">canal.instance.binlog.format</span> = <span class="string">ROW,STATEMENT,MIXED </span></span><br><span class="line"><span class="attr">canal.instance.binlog.image</span> = <span class="string">FULL,MINIMAL,NOBLOB</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># binlog ddl isolation</span></span><br><span class="line"><span class="attr">canal.instance.get.ddl.isolation</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># parallel parser config</span></span><br><span class="line"><span class="attr">canal.instance.parser.parallel</span> = <span class="string">true</span></span><br><span class="line"><span class="comment">## concurrent thread number, default 60% available processors, suggest not to exceed Runtime.getRuntime().availableProcessors()</span></span><br><span class="line"><span class="comment">#canal.instance.parser.parallelThreadSize = 16</span></span><br><span class="line"><span class="comment">## disruptor ringbuffer size, must be power of 2</span></span><br><span class="line"><span class="attr">canal.instance.parser.parallelBufferSize</span> = <span class="string">256</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># table meta tsdb info</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.enable</span> = <span class="string">true</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.dir</span> = <span class="string">$&#123;canal.file.data.dir:../conf&#125;/$&#123;canal.instance.destination:&#125;</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.url</span> = <span class="string">jdbc:h2:$&#123;canal.instance.tsdb.dir&#125;/h2;CACHE_SIZE=1000;MODE=MYSQL;</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.dbUsername</span> = <span class="string">canal</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.dbPassword</span> = <span class="string">canal</span></span><br><span class="line"><span class="comment"># dump snapshot interval, default 24 hour</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.snapshot.interval</span> = <span class="string">24</span></span><br><span class="line"><span class="comment"># purge snapshot expire , default 360 hour(15 days)</span></span><br><span class="line"><span class="attr">canal.instance.tsdb.snapshot.expire</span> = <span class="string">360</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">#################################################</span></span><br><span class="line"><span class="comment">######### 		destinations		#############</span></span><br><span class="line"><span class="comment">#################################################</span></span><br><span class="line"><span class="attr">canal.destinations</span> = <span class="string">example</span></span><br><span class="line"><span class="comment"># conf root dir</span></span><br><span class="line"><span class="attr">canal.conf.dir</span> = <span class="string">../conf</span></span><br><span class="line"><span class="comment"># auto scan instance dir add/remove and start/stop instance</span></span><br><span class="line"><span class="attr">canal.auto.scan</span> = <span class="string">true</span></span><br><span class="line"><span class="attr">canal.auto.scan.interval</span> = <span class="string">5</span></span><br><span class="line"><span class="comment"># set this value to &#x27;true&#x27; means that when binlog pos not found, skip to latest.</span></span><br><span class="line"><span class="comment"># WARN: pls keep &#x27;false&#x27; in production env, or if you know what you want.</span></span><br><span class="line"><span class="attr">canal.auto.reset.latest.pos.mode</span> = <span class="string">false</span></span><br><span class="line"></span><br><span class="line"><span class="attr">canal.instance.tsdb.spring.xml</span> = <span class="string">classpath:spring/tsdb/h2-tsdb.xml</span></span><br><span class="line"><span class="comment">#canal.instance.tsdb.spring.xml = classpath:spring/tsdb/mysql-tsdb.xml</span></span><br><span class="line"></span><br><span class="line"><span class="attr">canal.instance.global.mode</span> = <span class="string">spring</span></span><br><span class="line"><span class="attr">canal.instance.global.lazy</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">canal.instance.global.manager.address</span> = <span class="string">$&#123;canal.admin.manager&#125;</span></span><br><span class="line"><span class="comment">#canal.instance.global.spring.xml = classpath:spring/memory-instance.xml</span></span><br><span class="line"><span class="attr">canal.instance.global.spring.xml</span> = <span class="string">classpath:spring/file-instance.xml</span></span><br><span class="line"><span class="comment">#canal.instance.global.spring.xml = classpath:spring/default-instance.xml</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="comment">######### 	      MQ Properties      #############</span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="comment"># aliyun ak/sk , support rds/mq</span></span><br><span class="line"><span class="attr">canal.aliyun.accessKey</span> =<span class="string"></span></span><br><span class="line"><span class="attr">canal.aliyun.secretKey</span> =<span class="string"></span></span><br><span class="line"><span class="attr">canal.aliyun.uid</span>=<span class="string"></span></span><br><span class="line"></span><br><span class="line"><span class="attr">canal.mq.flatMessage</span> = <span class="string">true</span></span><br><span class="line"><span class="attr">canal.mq.canalBatchSize</span> = <span class="string">50</span></span><br><span class="line"><span class="attr">canal.mq.canalGetTimeout</span> = <span class="string">100</span></span><br><span class="line"><span class="comment"># Set this value to &quot;cloud&quot;, if you want open message trace feature in aliyun.</span></span><br><span class="line"><span class="attr">canal.mq.accessChannel</span> = <span class="string">local</span></span><br><span class="line"></span><br><span class="line"><span class="attr">canal.mq.database.hash</span> = <span class="string">true</span></span><br><span class="line"><span class="attr">canal.mq.send.thread.size</span> = <span class="string">30</span></span><br><span class="line"><span class="attr">canal.mq.build.thread.size</span> = <span class="string">8</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="comment">######### 		     Kafka 		     #############</span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="attr">kafka.bootstrap.servers</span> = <span class="string">127.0.0.1:9092</span></span><br><span class="line"><span class="attr">kafka.acks</span> = <span class="string">all</span></span><br><span class="line"><span class="attr">kafka.compression.type</span> = <span class="string">none</span></span><br><span class="line"><span class="attr">kafka.batch.size</span> = <span class="string">16384</span></span><br><span class="line"><span class="attr">kafka.linger.ms</span> = <span class="string">1</span></span><br><span class="line"><span class="attr">kafka.max.request.size</span> = <span class="string">1048576</span></span><br><span class="line"><span class="attr">kafka.buffer.memory</span> = <span class="string">33554432</span></span><br><span class="line"><span class="attr">kafka.max.in.flight.requests.per.connection</span> = <span class="string">1</span></span><br><span class="line"><span class="attr">kafka.retries</span> = <span class="string">0</span></span><br><span class="line"></span><br><span class="line"><span class="attr">kafka.kerberos.enable</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">kafka.kerberos.krb5.file</span> = <span class="string">&quot;../conf/kerberos/krb5.conf&quot;</span></span><br><span class="line"><span class="attr">kafka.kerberos.jaas.file</span> = <span class="string">&quot;../conf/kerberos/jaas.conf&quot;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="comment">######### 		    RocketMQ	     #############</span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="attr">rocketmq.producer.group</span> = <span class="string">test</span></span><br><span class="line"><span class="attr">rocketmq.enable.message.trace</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">rocketmq.customized.trace.topic</span> =<span class="string"></span></span><br><span class="line"><span class="attr">rocketmq.namespace</span> =<span class="string"></span></span><br><span class="line"><span class="attr">rocketmq.namesrv.addr</span> = <span class="string">127.0.0.1:9876</span></span><br><span class="line"><span class="attr">rocketmq.retry.times.when.send.failed</span> = <span class="string">0</span></span><br><span class="line"><span class="attr">rocketmq.vip.channel.enabled</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">rocketmq.tag</span> = <span class="string"></span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="comment">######### 		    RabbitMQ	     #############</span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="attr">rabbitmq.host</span> =<span class="string"></span></span><br><span class="line"><span class="attr">rabbitmq.virtual.host</span> =<span class="string"></span></span><br><span class="line"><span class="attr">rabbitmq.exchange</span> =<span class="string"></span></span><br><span class="line"><span class="attr">rabbitmq.username</span> =<span class="string"></span></span><br><span class="line"><span class="attr">rabbitmq.password</span> =<span class="string"></span></span><br><span class="line"><span class="attr">rabbitmq.deliveryMode</span> =<span class="string"></span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/../../assets/png/SpringCloud/Canal%E6%A0%B8%E5%BF%83%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E.png" alt="Canal核心参数说明"></p>
+<h4 id="Canal内部原理"><a href="#Canal内部原理" class="headerlink" title="Canal内部原理"></a>Canal内部原理</h4><p>Canal源码入口**<code>AbstractEventParser</code><strong>的</strong><code>start</code>**方法<br><img src="/../../assets/png/SpringCloud/Canal%E5%86%85%E9%83%A8%E5%8E%9F%E7%90%86.png" alt="Canal内部原理"></p>
+<ul>
+<li>server代表一个canal运行实例，对应于一个jvm</li>
+<li>instance对应于一个数据队列 （1个server对应1..n个instance)</li>
+<li>eventParser (数据源接入，模拟slave协议和master进行交互，协议解析)</li>
+<li>eventSink (Parser和Store链接器，进行数据过滤，加工，分发的工作)</li>
+<li>eventStore (数据存储)</li>
+<li>metaManager (增量订阅&amp;消费信息管理器)</li>
+</ul>
+<h4 id="Canal集群高可用"><a href="#Canal集群高可用" class="headerlink" title="Canal集群高可用"></a>Canal集群高可用</h4><p>Canal的HA分为Canal Server和Canal Client两部分实现，整个HA机制的控制主要是依赖了Zookeeper的几个特性，watcher和EPHEMERAL节点和session生命周期绑定。</p>
+<ul>
+<li><strong><code>Canal Server</code><strong>：为了</strong>减少对<code>MySQL Dump</code>的请求</strong>，不同Server上的instance要求**同一时间只能有一个处于<code>Running</code><strong>，其他的处于</strong><code>Standby</code>**状态</li>
+<li><strong><code>Canal Client</code><strong>：为了保证</strong>有序性</strong>，一份instance同一时间只能由一个Canal Client进行get&#x2F;ack&#x2F;rollback操作，否则客户端接收无法保证有序</li>
+</ul>
+<p><img src="/../../assets/png/SpringCloud/Canal%E9%AB%98%E5%8F%AF%E7%94%A8.png" alt="Canal高可用"></p>
+<ul>
+<li>Canal Server要启动某个Canal instance时都先向Zookeeper进行一次尝试启动判断，创建EPHEMERAL临时节点，谁创建成功就允许谁启动</li>
+<li>创建Zookeeper节点成功后，对应的Canal Server就启动对应的Canal instance，没有创建成功的Canal instance就会处于Standby状态</li>
+<li>一旦Zookeeper发现Canal Server A创建的节点消失后，立即通知其他的Canal Server再次进行步骤1的操作，重新选出一个Canal Server启动instance.</li>
+<li>Canal Client每次进行connect时，会首先向Zookeeper询问当前是谁启动了Canal instance，然后和其建立链接，一旦链接不可用，会重新尝试connect.</li>
+<li>Canal Client的方式和Canal Server方式类似，也是利用Zookeeper的抢占EPHEMERAL节点的方式进行控制。</li>
+</ul>
+<h4 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.alibaba.otter<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>canal.client<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.1.3<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@RocketMQMessageListener(topic = &quot;$&#123;rocketmq.canal.topic&#125;&quot;, consumerGroup = &quot;$&#123;rocketmq.canal.group&#125;&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RefreshCacheListener</span> <span class="keyword">implements</span> <span class="title class_">RocketMQListener</span>&lt;FlatMessage&gt; &#123;</span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedisOpsUtil redisOpsUtil;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">PRODUCT</span> <span class="operator">=</span> <span class="string">&quot;pms_product&quot;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">SKU</span> <span class="operator">=</span> <span class="string">&quot;pms_sku_stock&quot;</span>;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(FlatMessage flatMessage)</span> &#123;</span><br><span class="line">        <span class="comment">//修改后的新记录</span></span><br><span class="line">        List&lt;Map&lt;String, String&gt;&gt; records = flatMessage.getData();</span><br><span class="line">        <span class="comment">//修改前的数据</span></span><br><span class="line">        List&lt;Map&lt;String, String&gt;&gt; old = flatMessage.getOld();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SimpleCanalClientExample</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String args[])</span> &#123;</span><br><span class="line">        <span class="comment">// 创建链接</span></span><br><span class="line">        <span class="type">CanalConnector</span> <span class="variable">connector</span> <span class="operator">=</span> CanalConnectors.newSingleConnector(<span class="keyword">new</span> <span class="title class_">InetSocketAddress</span>(<span class="string">&quot;127.0.0.1&quot;</span>, <span class="number">11111</span>), <span class="string">&quot;example&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>);</span><br><span class="line">        <span class="type">int</span> <span class="variable">batchSize</span> <span class="operator">=</span> <span class="number">1000</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">emptyCount</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            connector.connect();</span><br><span class="line">            connector.subscribe(<span class="string">&quot;.*\\..*&quot;</span>);</span><br><span class="line">            connector.rollback();</span><br><span class="line">            <span class="type">int</span> <span class="variable">totalEmptyCount</span> <span class="operator">=</span> <span class="number">120</span>;</span><br><span class="line">            <span class="keyword">while</span> (emptyCount &lt; totalEmptyCount) &#123;</span><br><span class="line">                <span class="type">Message</span> <span class="variable">message</span> <span class="operator">=</span> connector.getWithoutAck(batchSize); <span class="comment">// 获取指定数量的数据</span></span><br><span class="line">                <span class="type">long</span> <span class="variable">batchId</span> <span class="operator">=</span> message.getId();</span><br><span class="line">                <span class="type">int</span> <span class="variable">size</span> <span class="operator">=</span> message.getEntries().size();</span><br><span class="line">                <span class="keyword">if</span> (batchId == -<span class="number">1</span> || size == <span class="number">0</span>) &#123;</span><br><span class="line">                    emptyCount++;</span><br><span class="line">                    System.out.println(<span class="string">&quot;empty count : &quot;</span> + emptyCount);</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">                    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    emptyCount = <span class="number">0</span>;</span><br><span class="line">                    <span class="comment">// System.out.printf(&quot;message[batchId=%s,size=%s] \n&quot;, batchId, size);</span></span><br><span class="line">                    printEntry(message.getEntries());</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                connector.ack(batchId); <span class="comment">// 提交确认</span></span><br><span class="line">                <span class="comment">// connector.rollback(batchId); // 处理失败, 回滚数据</span></span><br><span class="line">            &#125;</span><br><span class="line">            System.out.println(<span class="string">&quot;empty too many times, exit&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            connector.disconnect();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">printEntry</span><span class="params">(List&lt;Entry&gt; entrys)</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (Entry entry : entrys) &#123;</span><br><span class="line">            <span class="keyword">if</span> (entry.getEntryType() == EntryType.TRANSACTIONBEGIN || entry.getEntryType() == EntryType.TRANSACTIONEND) &#123;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="type">RowChange</span> <span class="variable">rowChage</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                rowChage = RowChange.parseFrom(entry.getStoreValue());</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;ERROR ## parser of eromanga-event has an error , data:&quot;</span> + entry.toString(), e);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="type">EventType</span> <span class="variable">eventType</span> <span class="operator">=</span> rowChage.getEventType();</span><br><span class="line">            System.out.println(String.format(<span class="string">&quot;================&amp;gt; binlog[%s:%s] , name[%s,%s] , eventType : %s&quot;</span>,</span><br><span class="line">                                             entry.getHeader().getLogfileName(), entry.getHeader().getLogfileOffset(),</span><br><span class="line">                                             entry.getHeader().getSchemaName(), entry.getHeader().getTableName(),</span><br><span class="line">                                             eventType));</span><br><span class="line">            <span class="keyword">for</span> (RowData rowData : rowChage.getRowDatasList()) &#123;</span><br><span class="line">                <span class="keyword">if</span> (eventType == EventType.DELETE) &#123;</span><br><span class="line">                    printColumn(rowData.getBeforeColumnsList());</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (eventType == EventType.INSERT) &#123;</span><br><span class="line">                    printColumn(rowData.getAfterColumnsList());</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    System.out.println(<span class="string">&quot;-------&amp;gt; before&quot;</span>);</span><br><span class="line">                    printColumn(rowData.getBeforeColumnsList());</span><br><span class="line">                    System.out.println(<span class="string">&quot;-------&amp;gt; after&quot;</span>);</span><br><span class="line">                    printColumn(rowData.getAfterColumnsList());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">printColumn</span><span class="params">(List&lt;Column&gt; columns)</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (Column column : columns) &#123;</span><br><span class="line">            System.out.println(column.getName() + <span class="string">&quot; : &quot;</span> + column.getValue() + <span class="string">&quot;    update=&quot;</span> + column.getUpdated());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/Cloud/Feign%E9%9B%86%E6%88%90%E5%8E%9F%E7%90%86/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Feign集成原理
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">SpringCloud系列14-总结</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

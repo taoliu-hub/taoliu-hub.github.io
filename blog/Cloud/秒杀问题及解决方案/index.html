@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    
+    <title>秒杀问题及解决方案 | TaoLiu-Blog</title>
+    
+    
+        <meta name="keywords" content="springCloud">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="秒杀业务特性秒杀具有瞬时高并发的特点，秒杀请求在时间上高度集中于某一特定的时间点（秒杀开始那一秒），就会导致一个特别高的流量峰值，它对资源的消耗是瞬时的。 但对秒杀场景来说，最终能够抢到商品的人数是固定的，也就是说100人和10000人发起请求的结果都是一样的，并发度越高，无效请求也越多。 但是从业务上来说，秒杀活动是希望更多的人来参与，开始之前希望有更多的人来刷页面，但是真正开始下单时，秒杀请求">
+<meta property="og:type" content="article">
+<meta property="og:title" content="秒杀问题及解决方案">
+<meta property="og:url" content="http://example.com/blog/Cloud/%E7%A7%92%E6%9D%80%E9%97%AE%E9%A2%98%E5%8F%8A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/index.html">
+<meta property="og:site_name" content="TaoLiu-Blog">
+<meta property="og:description" content="秒杀业务特性秒杀具有瞬时高并发的特点，秒杀请求在时间上高度集中于某一特定的时间点（秒杀开始那一秒），就会导致一个特别高的流量峰值，它对资源的消耗是瞬时的。 但对秒杀场景来说，最终能够抢到商品的人数是固定的，也就是说100人和10000人发起请求的结果都是一样的，并发度越高，无效请求也越多。 但是从业务上来说，秒杀活动是希望更多的人来参与，开始之前希望有更多的人来刷页面，但是真正开始下单时，秒杀请求">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/%E7%A7%92%E6%9D%80%E4%B8%9A%E5%8A%A1%E8%AE%BE%E8%AE%A1%E4%B8%80.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/%E7%A7%92%E6%9D%80%E4%B8%9A%E5%8A%A1%E8%AE%BE%E8%AE%A1%E4%BA%8C.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/redis%E6%89%A3%E5%87%8F%E5%BA%93%E5%AD%98%E4%B8%80.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/redis%E6%89%A3%E5%87%8F%E5%BA%93%E5%AD%98%E4%BA%8C.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/Sentinel%E6%B5%81%E6%8E%A7%E5%85%B3%E8%81%94%E8%A7%84%E5%88%99%E9%85%8D%E7%BD%AE.png">
+<meta property="og:image" content="http://example.com/assets/png/SpringCloud/%E6%9C%8D%E5%8A%A1%E9%99%8D%E7%BA%A7%E6%80%BB%E7%BB%93.png">
+<meta property="article:published_time" content="2022-01-02T12:08:20.000Z">
+<meta property="article:modified_time" content="2022-07-27T08:27:09.531Z">
+<meta property="article:author" content="Tao Liu">
+<meta property="article:tag" content="springCloud">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/png/SpringCloud/%E7%A7%92%E6%9D%80%E4%B8%9A%E5%8A%A1%E8%AE%BE%E8%AE%A1%E4%B8%80.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="TaoLiu-Blog" type="application/atom+xml">
+    
+
+    
+        <link rel="icon" href="/favicon.ico">
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">TaoLiu-Blog</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something...">
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search">
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id="categories">
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id="allExpand" href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree"> 
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Cloud
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Redis
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%9F%BA%E7%A1%80/">Redis基础</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%89%E8%A3%85/">Redis安装</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">Redis集群架构</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%AE%9E%E8%B7%B5-Java/">Redis实践-Java</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">Redis分布式锁实现</a></li>  <li class="file"><a href="/blog/Cloud/Redis/Redis%E7%BC%93%E5%AD%98%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">Redis缓存及性能优化</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringCloud
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud/">SpringCloud介绍</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%971-%E7%88%B6%E5%AD%90(%E8%81%9A%E5%90%88)%E9%A1%B9%E7%9B%AE/">SpringCloud系列1-父子(聚合)项目</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%972-%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">SpringCloud系列2-服务注册中心</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%973-%E6%B3%A8%E5%86%8C%E6%95%B0%E6%8D%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1/">SpringCloud系列3-注册数据微服务</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%974-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-RIBBON/">SpringCloud系列4-视图微服务-RIBBON</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%975-%E8%A7%86%E5%9B%BE%E5%BE%AE%E6%9C%8D%E5%8A%A1-Feign/">SpringCloud系列5-视图微服务-Feign</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%976-%E6%9C%8D%E5%8A%A1%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">SpringCloud系列6-服务链路追踪</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%977-%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8/">SpringCloud系列7-配置服务器</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%978-%E9%85%8D%E7%BD%AE%E5%AE%A2%E6%88%B7%E7%AB%AF/">SpringCloud系列8-配置客户端</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%979-%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BFBus/">SpringCloud系列9-消息总线Bus</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9710-%E6%96%AD%E8%B7%AF%E5%99%A8Hystrix/">SpringCloud系列10-断路器Hystrix</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9711-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%9B%91%E6%8E%A7/">SpringCloud系列11-断路器监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9712-%E6%96%AD%E8%B7%AF%E5%99%A8%E8%81%9A%E5%90%88%E7%9B%91%E6%8E%A7/">SpringCloud系列12-断路器聚合监控</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9713-%E7%BD%91%E5%85%B3Zuul/">SpringCloud系列13-网关Zuul</a></li>  <li class="file"><a href="/blog/Cloud/SpringCloud/SpringCloud%E7%B3%BB%E5%88%9714-%E6%80%BB%E7%BB%93/">SpringCloud系列14-总结</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Cloud/Gateway%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Gateway源码分析</a></li>  <li class="file"><a href="/blog/Cloud/Canal%E5%9F%BA%E7%A1%80/">Canal基础</a></li>  <li class="file"><a href="/blog/Cloud/Feign%E9%9B%86%E6%88%90%E5%8E%9F%E7%90%86/">Feign集成原理</a></li>  <li class="file"><a href="/blog/Cloud/Ribbon%E9%9B%86%E6%88%90%E5%8E%9F%E7%90%86/">Ribbon集成原理</a></li>  <li class="file"><a href="/blog/Cloud/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">分布式事务解决方案</a></li>  <li class="file"><a href="/blog/Cloud/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/">分布式系统常见问题</a></li>  <li class="file active"><a href="/blog/Cloud/%E7%A7%92%E6%9D%80%E9%97%AE%E9%A2%98%E5%8F%8A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">秒杀问题及解决方案</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            DB
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            MongoDB
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/MongoDB/MongoDB%E5%9F%BA%E7%A1%80/">MongoDB基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            mysql
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%9F%BA%E7%A1%80/">MySQL基础</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%B8%B8%E7%94%A8SQL%E6%80%BB%E7%BB%93/">MySQL常用SQL总结</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84/">MySQL主从架构</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E5%86%85%E9%83%A8%E7%BB%84%E4%BB%B6%E7%BB%93%E6%9E%84/">MySQL内部组件结构</a></li>  <li class="file"><a href="/blog/DB/mysql/MySQL%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%B8%8E%E9%94%81%E6%9C%BA%E5%88%B6/">MySQL事务隔离级别与锁机制</a></li>  <li class="file"><a href="/blog/DB/mysql/MVCC%E4%B8%8EBufferPool%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/"></a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            分库分表
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">分库分表</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            索引
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BD%BF%E7%94%A8/">索引的原理与使用</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%80/">索引优化一</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%BA%8C/">索引优化二</a></li>  <li class="file"><a href="/blog/DB/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E4%B8%89/">索引优化三</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/DB/Explain%E5%B7%A5%E5%85%B7/">Explain工具</a></li>  <li class="file"><a href="/blog/DB/ShardingSphere%E5%9F%BA%E7%A1%80/">ShardingSphere基础</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Spring
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            SpringBoot
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%20Jar%E5%8C%85%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot Jar包启动原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD/">SpringBoot资源加载</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D%E5%8E%9F%E7%90%86/">SpringBoot自动装配原理</a></li>  <li class="file"><a href="/blog/Spring/SpringBoot/SpringBoot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86/">SpringBoot启动原理</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/Spring/Spring%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/">Spring整体架构</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%87%E9%9D%A2%E7%B1%BB%E8%A7%A3%E6%9E%90/">AOP切面类解析</a></li>  <li class="file"><a href="/blog/Spring/AOP%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B0%83%E7%94%A8/">AOP创建代理与调用</a></li>  <li class="file"><a href="/blog/Spring/BeanDefinition%E8%A7%A3%E6%9E%90%E6%B3%A8%E5%86%8C/">BeanDefinition解析注册</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">Bean的生命周期</a></li>  <li class="file"><a href="/blog/Spring/Bean%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">Bean的加载过程</a></li>  <li class="file"><a href="/blog/Spring/Hystrix%E6%80%BB%E7%BB%93/">Hystrix总结</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8/">IoC容器</a></li>  <li class="file"><a href="/blog/Spring/IoC%E5%AE%B9%E5%99%A8%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B/">IoC容器加载过程</a></li>  <li class="file"><a href="/blog/Spring/Spring%20Gzip%E5%8E%8B%E7%BC%A9/">Spring Gzip压缩</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">SpringMvc加载机制</a></li>  <li class="file"><a href="/blog/Spring/Spring%E5%88%9D%E5%A7%8B%E5%8C%96%E6%89%A9%E5%B1%95/">Spring初始化扩展</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%A4%84%E7%90%86%E5%88%86%E5%8F%91%E8%AF%B7%E6%B1%82%E5%8E%9F%E7%90%86/">SpringMvc处理分发请求原理</a></li>  <li class="file"><a href="/blog/Spring/SpringMvc%E5%BC%82%E6%AD%A5%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/">SpringMvc异步原理及实现</a></li>  <li class="file"><a href="/blog/Spring/Spring%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B7%A8%E7%BA%BF%E7%A8%8B%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB/">Spring线程池跨线程数据共享</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E4%BB%B6%E7%9B%91%E5%90%AC%E5%99%A8/">事件监听器</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%A7%A3%E6%9E%90%E5%8E%9F%E7%90%86/">事务解析原理</a></li>  <li class="file"><a href="/blog/Spring/%E4%BA%8B%E5%8A%A1%E8%B0%83%E7%94%A8%E5%8E%9F%E7%90%86/">事务调用原理</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Test
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/Test/IT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">IT测试总结</a></li>  <li class="file"><a href="/blog/Test/UT%E6%B5%8B%E8%AF%95%E6%80%BB%E7%BB%93/">UT测试总结</a></li>  <li class="file"><a href="/blog/Test/JMeter%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">JMeter日常总结</a></li>  <li class="file"><a href="/blog/Test/LoadRunner%E6%97%A5%E5%B8%B8%E6%80%BB%E7%BB%93/">LoadRunner日常总结</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            工具和中间件
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            搜索引擎技术
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            ElasticSearch
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%9F%BA%E7%A1%80/">ElasticSearch基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%AE%9E%E6%88%98/">ElasticSearch实战</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E8%BF%9B%E9%98%B6/">ElasticSearch进阶</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch%E5%B7%A5%E5%85%B7-Kibana/">ElasticSearch工具-Kibana</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/ElasticSearch/ElasticSearch-Springboot/">ElasticSearch-Springboot</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Lucene
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%9F%BA%E7%A1%80/">Lucene基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E8%AF%8D%E5%99%A8/">Lucene分词器</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2/">Lucene分页查询</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Lucene/Lucene%E7%B4%A2%E5%BC%95%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0/">Lucene索引删除和更新</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Solr
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%9F%BA%E7%A1%80/">Solr基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8IKAnalyzer/">Solr中文分词器IKAnalyzer</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E8%AE%BE%E7%BD%AE%E5%AD%97%E6%AE%B5/">Solr设置字段</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95/">Solr创建索引</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2-Solrj/">Solr分页查询-Solrj</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E9%AB%98%E4%BA%AE%E6%98%BE%E7%A4%BA/">Solr高亮显示</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E6%8A%80%E6%9C%AF/Solr/Solr%E6%9B%B4%E6%96%B0%E5%92%8C%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95/">Solr更新和删除索引</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            消息队列
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Activemq
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E5%9F%BA%E7%A1%80/">ActiveMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E9%98%9F%E5%88%97%E6%A8%A1%E5%BC%8F/">ActiveMQ-队列模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%BC%8F/">ActiveMQ-主题模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Activemq/ActiveMQ-Spring%E9%9B%86%E6%88%90/">ActiveMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Kafka
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-%E5%9F%BA%E7%A1%80/">Kafka-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/Kafka/Kafka-Spring%E9%9B%86%E6%88%90/">Kafka-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RabbitMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E5%9F%BA%E7%A1%80/">RabbitMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-fanout%E6%A8%A1%E5%BC%8F/">RabbitMQ-fanout模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-direct%E6%A8%A1%E5%BC%8F/">RabbitMQ-direct模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-topic%E6%A8%A1%E5%BC%8F/">RabbitMQ-topic模式</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RabbitMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RabbitMQ/RabbitMQ-Spring%E9%9B%86%E6%88%90/">RabbitMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            RocketMQ
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E5%9F%BA%E7%A1%80/">RocketMQ-基础</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E7%94%9F%E4%BA%A7%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-生产者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E8%B4%B9%E8%80%85%E6%BA%90%E7%A0%81/">RocketMQ-消费者源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8%E6%BA%90%E7%A0%81/">RocketMQ-消息存储源码</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/">RocketMQ-高级特性</a></li>  <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/RocketMQ/RocketMQ-Spring%E9%9B%86%E6%88%90/">RocketMQ-Spring集成</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E5%B7%A5%E5%85%B7%E5%92%8C%E4%B8%AD%E9%97%B4%E4%BB%B6/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></li>  </ul> 
+                    </li> 
+                     </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            数据结构和算法
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/JAVA%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95/">JAVA数据结构和算法</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            设计模式
+                        </a>
+                         <ul class="unstyled" id="tree"> 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            创建型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">单例模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">原型模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">工厂模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">建造者模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            结构型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/">外观模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/">组合模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/">装饰模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/">适配器模式</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            行为型模式
+                        </a>
+                         <ul class="unstyled" id="tree">  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F/">命令模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F/">备忘录模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">模板方法模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%8A%B6%E6%80%81%E6%A8%A1%E5%BC%8F/">状态模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F/">中介者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F/">策略模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">观察者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">责任链模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F/">访问者模式</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">迭代器模式</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%A7%88/">设计模式概览</a></li>  <li class="file"><a href="/blog/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/SOLID%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99/">SOLID基本原则</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/blog/hello-hexo/">Hello hexo</a></li>  <li class="file"><a href="/blog/index/">Welcome TaoLiu's Blog</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Cloud/秒杀问题及解决方案" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Cloud/">Cloud</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/springCloud/" rel="tag">springCloud</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/blog/Cloud/%E7%A7%92%E6%9D%80%E9%97%AE%E9%A2%98%E5%8F%8A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">
+            <time datetime="2022-01-02T12:08:20.000Z" itemprop="datePublished">2022-01-02</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            秒杀问题及解决方案
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+        
+        
+            <h4 id="秒杀业务特性"><a href="#秒杀业务特性" class="headerlink" title="秒杀业务特性"></a>秒杀业务特性</h4><p><strong>秒杀具有瞬时高并发的特点</strong>，秒杀请求在时间上高度集中于某一特定的时间点（秒杀开始那一秒），就会导致一个特别高的流量峰值，它对资源的消耗是瞬时的。</p>
+<p>但对秒杀场景来说，最终能够抢到商品的人数是固定的，也就是说100人和10000人发起请求的结果都是一样的，<strong>并发度越高，无效请求也越多</strong>。</p>
+<p>但是<strong>从业务上来说，秒杀活动是希望更多的人来参与</strong>，开始之前希望有更多的人来刷页面，但是真正开始下单时，秒杀请求并不是越多越好。</p>
+<h4 id="流量削峰"><a href="#流量削峰" class="headerlink" title="流量削峰"></a>流量削峰</h4><p><strong>服务器处理资源是恒定的</strong>，用或者不用它的处理能力都是一样的，出现峰值很容易导致忙到处理不过来，闲的时候却又没有什么要处理。</p>
+<p>流量削峰，一是可以<strong>让服务端处理变得更加平稳</strong>，二是可以<strong>节省服务器的资源成本</strong>。针对秒杀这一场景，削峰从本质上来说就是<strong>更多地延缓用户请求的发出</strong>，以便减少和过滤掉一些无效请求，它遵从<strong>请求数要尽量少</strong>的原则。流量削峰的比较常见的思路：<strong>排队</strong>、<strong>答题</strong>、<strong>分层过滤</strong>。</p>
+<h4 id="秒杀业务设计"><a href="#秒杀业务设计" class="headerlink" title="秒杀业务设计"></a>秒杀业务设计</h4><p><img src="/../../assets/png/SpringCloud/%E7%A7%92%E6%9D%80%E4%B8%9A%E5%8A%A1%E8%AE%BE%E8%AE%A1%E4%B8%80.png" alt="秒杀业务设计一"></p>
+<p><strong>营销工具：</strong>系统整理的促销工具，可以对某些特定的工具详细解释<br><strong>营销活动：</strong>从营销工具中提出创建一个活动<br><strong>营销活动订单：</strong>针对营销活动产生的订单</p>
+<p><img src="/../../assets/png/SpringCloud/%E7%A7%92%E6%9D%80%E4%B8%9A%E5%8A%A1%E8%AE%BE%E8%AE%A1%E4%BA%8C.png" alt="秒杀业务设计二"></p>
+<p><strong>商品级优惠</strong>：限时促销、限时抢购、秒杀、商品包邮</p>
+<p><strong>订单级优惠</strong>：满就赠、满立减、送优惠券、折扣、Vip折扣、订单包邮</p>
+<p><strong>全站级促销优惠</strong>：优惠券、优化券补发、银行促销、支付红包、团购预售、微信砍价</p>
+<h4 id="秒杀技术特性"><a href="#秒杀技术特性" class="headerlink" title="秒杀技术特性"></a>秒杀技术特性</h4><p>单一职责、流量错峰、限流、熔断、降级、队列削峰、预热快速扣减、动静分离</p>
+<hr>
+<p>一般下单流程分为<strong>下单确认</strong>和<strong>下单提交</strong>，核心点为<strong>价格计算</strong>和<strong>库存处理</strong>，在下单确认时首先做一些检查、然后获取会员、商品等信息计算金额生成商品信息。</p>
+<ul>
+<li>信息检查：检查<strong>本地缓存售罄状态</strong>、校验token是否有权限购买、判断redis库存是否充足、检查是否正在排队中</li>
+<li>调用会员服务获取会员信息</li>
+<li>调用产品服务获取产品信息</li>
+<li>验证秒杀时间是否超时</li>
+<li>获取用户收获列表</li>
+<li>构建商品信息</li>
+<li>根据各种优惠计算订单金额</li>
+</ul>
+<p><strong>下单提交的核心流程</strong>为：</p>
+<ul>
+<li>信息检查：检查<strong>本地缓存售罄状态</strong>、校验token是否有权限购买、判断redis库存是否充足、检查是否正在排队中</li>
+<li>调用会员服务获取会员信息</li>
+<li>调用产品服务获取产品信息</li>
+<li>验证秒杀时间是否超时</li>
+<li>预减库存（异步流程）</li>
+<li>生成下单商品信息</li>
+<li>库存处理</li>
+</ul>
+<hr>
+<h3 id="库存问题"><a href="#库存问题" class="headerlink" title="库存问题"></a>库存问题</h3><p>高并发下会出现<strong>超卖问题</strong>、<strong>何时扣减库存</strong></p>
+<h4 id="超卖问题"><a href="#超卖问题" class="headerlink" title="超卖问题"></a>超卖问题</h4><p>可通过<strong>数据库锁</strong>、<strong>redis特性</strong>、<strong>异步下单</strong>等解决方案来解决</p>
+<h4 id="数据库锁"><a href="#数据库锁" class="headerlink" title="数据库锁"></a>数据库锁</h4><p><strong>悲观锁</strong>，通过**<code>MySQL</code>提供的<code>select...for update</code><strong>实现的悲观锁方式，但</strong><code>select...for update</code>语句执行中所有扫描过的行都会被锁上<strong>，因此在MySQL中用悲观锁</strong>务必须确定走索引**，而不是全表扫描，否则将会将整个数据表锁住。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">begin</span>;</span><br><span class="line"><span class="keyword">select</span> flash_promotion_count <span class="keyword">from</span> sms_flash_promotion_product_relation <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">43</span> <span class="keyword">for</span> <span class="keyword">UPDATE</span>;</span><br><span class="line"><span class="keyword">update</span> sms_flash_promotion_product_relation <span class="keyword">set</span> flash_promotion_count <span class="operator">=</span> flash_promotion_count <span class="operator">-</span> <span class="number">1</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">43</span>;</span><br><span class="line"><span class="comment">--ROLLBACK;</span></span><br><span class="line"><span class="keyword">commit</span>；</span><br></pre></td></tr></table></figure>
+
+<p>悲观锁大多数情况下依靠<strong>数据库的锁机制</strong>实现，以保证操作最大程度的独占性，若<strong>加锁时间过长</strong>，其他用户长时间无法访问，影响了程序的并发访问性，同时这样对<strong>数据库性能开销影响很大</strong>，特别是对<strong>长事务</strong>而言，这样的开销往往无法承受，这时就需要乐观锁。</p>
+<p><strong>乐观锁</strong>，在<strong>数据进行提交更新时</strong>，才会正式对数据的冲突与否进行检测，若发现冲突则返回错误信息，让用户决定如何去做。<strong>版本号的实现</strong>有<strong>数据版本机制</strong>和<strong>时间催机制</strong>两种。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">begin</span>;</span><br><span class="line"><span class="keyword">select</span> flash_promotion_count <span class="keyword">from</span> sms_flash_promotion_product_relation <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">43</span> ;</span><br><span class="line"><span class="keyword">update</span> sms_flash_promotion_product_relation <span class="keyword">set</span> flash_promotion_count <span class="operator">=</span> flash_promotion_count, version <span class="operator">=</span> version <span class="operator">+</span> <span class="number">1</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">43</span> <span class="keyword">and</span> version <span class="operator">=</span> #version#;</span><br><span class="line"><span class="comment">-- ROLLBACK;</span></span><br><span class="line"><span class="keyword">Commit</span>；</span><br></pre></td></tr></table></figure>
+
+<p>除了查询库存还需要<strong>更新库存</strong>，还有订单、订单日志、订单详情等需要插入数据库。库存更新没问题，但插入订单时<strong>失败</strong>了<strong>是否回滚</strong>，若<strong>不在一个事务就会出错</strong>。若在一个事务又涉及到<strong>事务过长</strong>甚至可能是<strong>跨库</strong>然后无法用本地事务来解决。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 扣减库存，防止库存超卖，若可以买多个，上面的SQL就有问题</span></span><br><span class="line"><span class="keyword">UPDATE</span> sms_flash_promotion_product_relation</span><br><span class="line"><span class="keyword">SET</span> flash_promotion_count <span class="operator">=</span> <span class="keyword">CASE</span></span><br><span class="line">  <span class="keyword">WHEN</span> flash_promotion_count <span class="operator">&gt;=</span> #&#123;stock&#125; <span class="keyword">THEN</span></span><br><span class="line">    flash_promotion_count <span class="operator">-</span> #&#123;stock&#125;</span><br><span class="line">  <span class="keyword">ELSE</span></span><br><span class="line">    flash_promotion_count</span><br><span class="line">  <span class="keyword">END</span></span><br><span class="line"><span class="keyword">WHERE</span></span><br><span class="line">id <span class="operator">=</span> #&#123;id&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>数据库锁的问题</strong>：若数据库只有10个商品，1000个人来抢，意味着990个请求没有意义，但这种方案1000个请求都会到数据库尝试扣减库存，大量请求会导致数据库超载。</p>
+<h4 id="Redis版本"><a href="#Redis版本" class="headerlink" title="Redis版本"></a>Redis版本</h4><p>使用数据库锁方案数<strong>据库性能相对来说是有很大瓶颈</strong>，故可把库存放到redis中，秒杀下单时先从redis中获取库存数量，然后根据库存数量判断是否可进行下一步，若有库存就直接下单没有库存就不能下单。这样<strong>可拦截大部分流量进入到数据库中</strong>。需要将商品库存预先加载到Redis中。<br><img src="/../../assets/png/SpringCloud/redis%E6%89%A3%E5%87%8F%E5%BA%93%E5%AD%98%E4%B8%80.png" alt="redis扣减库存一"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 从redis缓存当中取出当前要购买的商品库存</span></span><br><span class="line"><span class="type">Integer</span> <span class="variable">stock</span> <span class="operator">=</span> redisOpsUtil.get(RedisKeyPrefixConst.MIAOSHA_STOCK_CACHE_PREFIX + productId, Integer.class);</span><br><span class="line"><span class="keyword">if</span> (stock == <span class="literal">null</span> || stock &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> CommonResult.failed(<span class="string">&quot;商品已经售罄，请购买其它商品!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于Redis来说还是有<strong>网络IO</strong>，当商品售罄时在<strong>本地缓存</strong>中设置该商品的售罄标志为true，从而减少Redis的网络IO。</p>
+<p><img src="/../../assets/png/SpringCloud/redis%E6%89%A3%E5%87%8F%E5%BA%93%E5%AD%98%E4%BA%8C.png" alt="redis扣减库存二"></p>
+<p>Boolean localcache &#x3D; cache.getCache(RedisKeyPrefixConst.MIAOSHA_STOCK_CACHE_PREFIX + productId);<br>if (localcache !&#x3D; null &amp;&amp; localcache) {<br> return CommonResult.failed(“商品已经售罄,请购买其它商品!”);<br>}<br>&#x2F;&#x2F; 从redis缓存当中取出当前要购买的商品库存<br>Integer stock &#x3D; redisOpsUtil.get(RedisKeyPrefixConst.MIAOSHA_STOCK_CACHE_PREFIX + productId, Integer.class);<br>if (stock &#x3D;&#x3D; null || stock &lt;&#x3D; 0) {<br> &#x2F;&#x2F; 设置标记，如果售罄了在本地cache中设置为true<br> cache.setLocalCache(RedisKeyPrefixConst.MIAOSHA_STOCK_CACHE_PREFIX + productId, true);<br> return CommonResult.failed(“商品已经售罄,请购买其它商品!”);<br>}</p>
+<p>虽然可通过增加本地缓存减少Redis网络IO，但会存在<strong>产品售罄标志同步问题</strong>，可<strong>通过<code>Zookeeper</code>的watcher机制来实现同步</strong>，给每个JVM都监听Zookeeper的某个节点，一旦数据有改变之后通知到其他节点上。还可以利用<strong>Redis的<code>Channel</code>机制</strong>实现的<strong>发布订阅模式</strong>来实现<strong>产品售罄标志同步</strong>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedisOpsUtil</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">publish</span><span class="params">(String channel,Object message)</span>&#123;</span><br><span class="line">        redisTemplate.convertAndSend(channel,message);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">shouldPublishCleanMsg</span><span class="params">(Long productId)</span> &#123;</span><br><span class="line">    <span class="type">Integer</span> <span class="variable">stock</span> <span class="operator">=</span> redisOpsUtil.get(RedisKeyPrefixConst.MIAOSHA_STOCK_CACHE_PREFIX + productId, Integer.class);</span><br><span class="line">    <span class="keyword">return</span> (stock == <span class="literal">null</span> || stock &lt;= <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//通知服务群,清除本地售罄标记缓存</span></span><br><span class="line"><span class="keyword">if</span> (shouldPublishCleanMsg(productId)) &#123;</span><br><span class="line">    redisOpsUtil.publish(<span class="string">&quot;cleanNoStockCache&quot;</span>, productId);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedisChannelListener</span> <span class="keyword">implements</span> <span class="title class_">MessageListener</span> &#123;</span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> LocalCache localCache;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(Message message, <span class="meta">@Nullable</span> <span class="type">byte</span>[] pattern)</span> &#123;</span><br><span class="line">        log.info(<span class="string">&quot;sub message :) channel[cleanNoStockCache] !&quot;</span>);</span><br><span class="line">        <span class="type">String</span> <span class="variable">productId</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">String</span>(message.getBody(), StandardCharsets.UTF_8);</span><br><span class="line">        localCache.remove(RedisKeyPrefixConst.MIAOSHA_STOCK_CACHE_PREFIX + productId);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>Zookeeper</code><strong>和</strong><code>Redis</code><strong>各有各的优缺点，Zookeeper是CP模式的可保证高可用，但</strong>吞吐量会比较低</strong>，<strong>Redis这种发布订阅模式没有<code>Ack</code><strong>，发出去后不管是否收到，因为</strong>减少了通讯吞吐量相对来说会比较高</strong>。</p>
+<h4 id="异步下单"><a href="#异步下单" class="headerlink" title="异步下单"></a>异步下单</h4><p>前面的方案，下单时会插入很多张表，</p>
+<ul>
+<li>异步下单可以分流、让服务器处理压力变小、数据库压力减少</li>
+<li>解耦，业务更清晰</li>
+<li>天然排队处理能力</li>
+<li>消息中间件有很多特性可以利用，如订单取消</li>
+</ul>
+<h4 id="订单超时取消"><a href="#订单超时取消" class="headerlink" title="订单超时取消"></a>订单超时取消</h4><ul>
+<li><p><strong>定时任务</strong>：<strong>时间不准确</strong>，定时扫数据库的话消耗性能也很大，效率也会很低，对<strong>数据库压力太大</strong>，集群还需要保证处理的<strong>幂等性</strong>和<strong>分布式</strong>问题</p>
+</li>
+<li><p><strong>消息队列异步取消</strong>：通过<strong>延时消息</strong>实现</p>
+</li>
+</ul>
+<h4 id="何时扣减库存"><a href="#何时扣减库存" class="headerlink" title="何时扣减库存"></a>何时扣减库存</h4><p><strong>下单</strong>时扣减**<code>redis</code><strong>中的库存<br><strong>支付</strong>时扣减</strong>数据库<strong>中的库存<br>扣减</strong>库存系统**中的库存</p>
+<hr>
+<h3 id="秒杀总结"><a href="#秒杀总结" class="headerlink" title="秒杀总结"></a>秒杀总结</h3><p><strong>尽量将请求拦截在系统上游</strong>，后续占据99%的请求，直接Nginx层面拦截掉<br><strong>都多写少的场景多使用缓存</strong>，多级缓存保护好数据库<br><strong>用消息中间件解决流量削峰</strong>，订单请求写入RocketMQ进行削峰，让RocketMQ轻松抗下高并发压力，让订单系统慢慢消费和处理下单操作</p>
+<h4 id="秒杀商品详细页架构解决方案"><a href="#秒杀商品详细页架构解决方案" class="headerlink" title="秒杀商品详细页架构解决方案"></a>秒杀商品详细页架构解决方案</h4><p><strong>将秒杀活动商品详情页做成静态化</strong></p>
+<p>提前从数据库中把该页面需要的数据都提取出来组装成一份静态数据放在别的地方，避免每次访问都要访问后端数据库，该方案不适用商品比较多的商城如京东，适合商品较少的如小米，因为一旦修改了模板需要全部进行改动。</p>
+<p><strong>CDN+Nginx+Redis多级缓存架构</strong></p>
+<ul>
+<li><strong>第一级缓存</strong>：请求秒杀商品详情页数据时，<strong>从就近<code>CND</code>上加载</strong>，不需要每次请求都到某个机房</li>
+<li><strong>Nginx基于Lua脚本实现本地缓存</strong>：提前把秒杀商品详情页的数据放到Nginx中缓存，不需要把请求转发到商品系统上</li>
+<li><strong>第二级缓存</strong>：Nginx上存在缓存数据过期之类的问题，导致没有找到需要的数据，此时由Nginx中的Lua脚本发送请求到本地缓存</li>
+<li><strong>第三级缓存</strong>：若还没找到，把请求转发到Redis集群中加载提前放入的秒杀商品数据</li>
+</ul>
+<h4 id="秒杀下单TPS压力过大的解决方案"><a href="#秒杀下单TPS压力过大的解决方案" class="headerlink" title="秒杀下单TPS压力过大的解决方案"></a>秒杀下单TPS压力过大的解决方案</h4><ul>
+<li>加数据库服务器方案<ul>
+<li>会导致公司服务器成本急剧飙升</li>
+<li>库存超卖：乐观锁和悲观锁，都会影响性能</li>
+</ul>
+</li>
+<li>用<strong>答题、复杂验证码</strong>的方案<strong>避免作弊</strong>以及<strong>延时下单</strong>：在前端或客户端设置秒杀答题，错开大量人下单的时间，阻止作弊器刷单</li>
+<li><strong>为秒杀独立出一套订单系统</strong>，专门负责秒杀请求：若秒杀下单请求和普通下单请求都由一套订单系统来承载，可能导致秒杀下单请求耗尽订单系统资源，或导致系统不稳定，从而导致其他普通下单请求也出现问题。</li>
+<li><strong>基于Redis实现下单时精准扣减库存</strong>，一旦库存扣减完则秒杀结束：一般会将每个秒杀商品库存提前写入Redis，在下单请求来后直接对Redis中的库存进行扣减</li>
+<li><strong>抢购完毕后提前过滤无效请求，大幅度消减转发到后端的流量</strong><ul>
+<li>在Redis中库存扣减完成后，说明后续其他请求没有必要发送到秒杀系统中了，因为商品已经被抢购完成了，此时可让Nginx接收到后续请求时直接把后续请求过滤掉</li>
+<li>一旦商品抢购完毕，可在Redis或Zookeeper中写入一个秒杀完毕的标志位，然后反向通知Nginx中自己写的Lua脚本，通过Lua脚本将后续请求直接过滤掉</li>
+<li>在网关层或Sentinel做流量控制</li>
+</ul>
+</li>
+<li><strong>瞬时高并发下单请求进入RocketMQ进行削峰，订单系统慢慢拉取消息完成下单操作</strong>：若判断发现通过Redis完成了库存扣减，此时直接发送消息到RocketMQ即可，让普通订单系统从RocketMQ中消费秒杀成功的消息进行常规的流程处理即可，后续订单系统以每秒几千的速率慢慢处理，延迟可能几十秒，这些订单就能被处理完毕</li>
+</ul>
+<h4 id="前端验证问题"><a href="#前端验证问题" class="headerlink" title="前端验证问题"></a>前端验证问题</h4><p><strong>针对前端验证问题</strong>，可通过<strong>提前发<code>Token</code><strong>，在秒杀前设置一个</strong>预约活动</strong>，如一个秒杀活动有**<code>20W</code><strong>个商品，可预先准备</strong><code>200W</code>**个Token，用户进行预约时，只发放200W个Token，其他人也能预约成功，但是其实没有获得token，后面秒杀直接通过该Token就可过滤掉一大部分人，相当于没有Token的人都只预约了个寂寞。</p>
+<h4 id="针对超卖问题"><a href="#针对超卖问题" class="headerlink" title="针对超卖问题"></a>针对超卖问题</h4><p><strong>针对超卖问题</strong>，可使用**<code>Redis</code>分布式锁防超卖**，针对同一个商品ID，使用一把分布式锁，若同时有成千上万个商品要进行秒杀，那就意味着同一时间Redis上锁解锁的操作会要执行成千上万次，这对Redis的性能消耗是相当巨大的，Redis就有可能升级成为新的性能瓶颈。</p>
+<p>可把<strong>秒杀超卖的问题从分布式降级到本地JVM中</strong>，来获取极限性能。<strong>将秒杀服务接入配置中心</strong>，然后在秒杀服务开始前，<strong>由配置中心给每个应用服务实例下发一个库存数量</strong>。然后每次下单，每个服务器只管自己的库存数量，与其他应用服务器<strong>完全不进行库存同步</strong>，在各自的内存里扣减库存，这样就不会有超卖的情况发生。<strong>减少了网络消耗</strong>，性能也能够进一步提升。</p>
+<p>可能给<strong>某服务器上的库存很快消耗完</strong>了，而其他的服务器上仍有库存，整个服务就会表现为你抢不到商品，但是在你后面抢商品的人却能抢到商品，但是这在秒杀这种场景下，完全是可以接受的。</p>
+<p>若<strong>某一个应用服务器挂了</strong>，给他<strong>分配的库存就会丢失</strong>，这时只需要<strong>统计好订单的数量</strong>，可通过MQ来统计，也可通过Redis统计，等秒杀活动30分钟等待支付期过去后，再将没卖出去的库存重新丢回库存池，与没有付款而被取消的订单商品一起返场售卖即可。</p>
+<hr>
+<h3 id="兜底方案之限流-amp-降级"><a href="#兜底方案之限流-amp-降级" class="headerlink" title="兜底方案之限流&amp;降级"></a>兜底方案之限流&amp;降级</h3><p>对于很多秒杀系统而言，在诸如双十一这样的大流量的迅猛冲击下，都曾经或多或少发生过宕机的情况。当一个系统面临持续的大流量时，它其实<strong>很难单靠自身调整来恢复状态</strong>，必须等待<strong>流量自然下降</strong>或<strong>人为地把流量切走</strong>才行，这无疑会严重影响用户的购物体验。</p>
+<p>在系统<strong>达到不可用状态之前</strong>就做好<strong>流量限制</strong>，防止最坏情况的发生。针对秒杀系统，在遇到大流量时，更多考虑的是<strong>运行阶段</strong>如何保障系统的稳定运行，常用的手段：<strong>限流</strong>，<strong>降级</strong>，<strong>拒绝服务</strong>。</p>
+<p>限流相对降级是一种更极端的保存措施，限流就是当<strong>系统容量达到瓶颈时</strong>，需要通过限制一部分流量来保护系统，并做到既可人工执行开关，也支持自动化保护的措施。</p>
+<p>限流既可在<strong>客户端限流</strong>，也可在<strong>服务端限流</strong>。限流的实现方式既要支持**<code>URL</code><strong>以及</strong>方法级别<strong>的限流，也要支持基于  <strong><code>QPS</code><strong>和</strong>线程</strong>的限流。限流必然会导致一部分用户请求失败，因此在系统处理这种异常时</strong>一定要设置超时时间**，防止因被限流的请求不能fast fail（快速失败）而拖垮系统。</p>
+<h4 id="Nginx限流"><a href="#Nginx限流" class="headerlink" title="Nginx限流"></a>Nginx限流</h4><p>可使用**<code>ngx_http_limit_conn_module</code><strong>对于一些服务器</strong>流量异常<strong>、</strong>负载过大<strong>，甚至是</strong>大流量的恶意攻击访问<strong>等，进行</strong>并发数的限制<strong>；该模块可</strong>根据定义的键来限制每个键值的连接数**，只有那些正在被处理的请求，这些请求的头信息已被完全读入，所在的连接才会被计数。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 限制连接数，客户端的IP地址作为键，</span></span><br><span class="line"><span class="comment"># binary_remote_addr变量长度是固定4字节，在32位平台中占用32字节或64字节，在64位平台中占用64字节</span></span><br><span class="line"><span class="comment"># 1M共享空间可以保存3.2万个32位的状态，1.6万个64位的状态</span></span><br><span class="line"><span class="comment"># 若共享内存空间被耗尽，服务器将会对后续所有的请求返回503即Service Temporarily Unavailable错误</span></span><br><span class="line"><span class="attr">limit_conn_zone</span> <span class="string">$binary_remote_addr zone=addr:10m;</span></span><br><span class="line"><span class="attr">server</span> <span class="string">&#123;</span></span><br><span class="line">    <span class="attr">location</span> <span class="string">/download/ &#123;</span></span><br><span class="line"><span class="comment">        # 指定每个给定键值的最大同时连接数，同一IP同一时间只允许有1个连接</span></span><br><span class="line">        <span class="attr">limit_conn</span> <span class="string">addr 1;</span></span><br><span class="line">    <span class="attr">&#125;</span></span><br><span class="line"><span class="attr">&#125;</span></span><br><span class="line"><span class="comment"># 缺点：前端做LVS或反向代理，会出现大量的503错误，需要设置白名单对某些ip不做限制</span></span><br></pre></td></tr></table></figure>
+
+<p>通过**<code>ngx_http_limit_req_module</code><strong>模块可</strong>通过定义的键值来限制请求处理的频率**。特别的可限制来自单个IP地址的请求处理频率。限制的方法如同漏斗，每秒固定处理请求数，推迟过多请求。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">http</span> <span class="string">&#123;</span></span><br><span class="line"><span class="comment">    # 区域名称为one，大小为10m，平均处理的请求频率不能超过每秒一次。键值是客户端IP</span></span><br><span class="line">    <span class="attr">limit_req_zone</span> <span class="string">$binary_remote_addr zone=one:10m rate=1r/s;</span></span><br><span class="line">    <span class="attr">...</span></span><br><span class="line">    <span class="attr">server</span> <span class="string">&#123;</span></span><br><span class="line">        <span class="attr">...</span></span><br><span class="line">        <span class="attr">location</span> <span class="string">/search/ &#123;</span></span><br><span class="line"><span class="comment">            # 允许超出频率限制的请求数为5，默认会被延迟处理，如果不希望延迟处理，可以使用nodelay参数</span></span><br><span class="line">            <span class="attr">limit_req</span> <span class="string">zone=one burst=5 nodelay;</span></span><br><span class="line">        <span class="attr">&#125;</span></span><br><span class="line">    <span class="attr">&#125;</span></span><br><span class="line"><span class="attr">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/openresty/lua-resty-limit-traffic">OpenResty</a>利用Lua限流</p>
+<h4 id="网关接入Sentinel控制台"><a href="#网关接入Sentinel控制台" class="headerlink" title="网关接入Sentinel控制台"></a>网关接入Sentinel控制台</h4><h5 id="Route维度限流"><a href="#Route维度限流" class="headerlink" title="Route维度限流"></a>Route维度限流</h5><h5 id="API维度限流"><a href="#API维度限流" class="headerlink" title="API维度限流"></a>API维度限流</h5><h5 id="应用层限流"><a href="#应用层限流" class="headerlink" title="应用层限流"></a>应用层限流</h5><p>系统第一次上线启动，或系统在Redis故障情况下重新启动，这时在高并发的场景下就会出现所有的流量都打到数据库上，导致数据库崩溃。因此需要通过缓存预热的方案，提前给Redis灌入部分数据后再提供服务。<br><img src="/../../assets/png/SpringCloud/Sentinel%E6%B5%81%E6%8E%A7%E5%85%B3%E8%81%94%E8%A7%84%E5%88%99%E9%85%8D%E7%BD%AE.png" alt="Sentinel流控关联规则配置"></p>
+<p>可在<strong>流控规则中配置关联模式</strong>，将数据库资源加入限流资源中，<strong>当对数据库访问达到阈值，可对商品详情请求限流</strong>。<br><img src="/../../assets/png/SpringCloud/%E6%9C%8D%E5%8A%A1%E9%99%8D%E7%BA%A7%E6%80%BB%E7%BB%93.png" alt="服务降级总结"></p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/blog/DB/mysql/MVCC%E4%B8%8EBufferPool%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    (no title)
+                
+            </div>
+        </a>
+    
+    
+        <a href="/blog/Cloud/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">分布式系统常见问题</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Tao Liu &copy; 2022 
+            <!-- <a rel="license noopener" target="_blank" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a> -->
+            <br> Powered by <a href="http://hexo.io/" target="_blank" rel="external nofollow noopener noreferrer">Hexo</a>. Theme - <a target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/taoliu-hub/hexo-theme-Wikitten">wikitten</a>
+            <!-- 
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+             -->
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
